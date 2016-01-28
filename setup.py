@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 from pip.req import parse_requirements
 try:
     from setuptools import setup
@@ -8,14 +9,14 @@ except ImportError:
     from distutils.core import setup
 
 
-with open('README.rst') as readme_file:
+with open('README.md') as readme_file:
     readme = readme_file.read()
 
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [str(i.req) for i in parse_requirements("requirements.txt", session=False)]
-test_requirements = [str(i.req) for i in parse_requirements("requirements_dev.txt", session=False)]
+requirements = [str(i.req) for i in parse_requirements(os.path.join(os.path.dirname(__file__), 'requirements.txt'), session=False)]
+test_requirements = [str(i.req) for i in parse_requirements(os.path.join(os.path.dirname(__file__), 'requirements_dev.txt'), session=False)]
 
 setup(
     name='swagger_parser',
