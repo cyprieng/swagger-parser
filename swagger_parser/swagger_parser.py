@@ -4,8 +4,13 @@ import datetime
 import jinja2
 import json
 import re
-from StringIO import StringIO
+import six
 import yaml
+
+try:
+    from StringIO import StringIO
+except ImportError:  # Python 3
+    from io import StringIO
 
 from swagger_spec_validator.validator20 import validate_spec
 
@@ -68,7 +73,7 @@ class SwaggerParser(object):
 
     def build_definitions_example(self):
         """Parse all definitions in the swagger specification."""
-        for def_name, def_spec in self.specification['definitions'].iteritems():
+        for def_name, def_spec in self.specification['definitions'].items():
             self.build_one_definition_example(def_name)
 
     def build_one_definition_example(self, def_name):
@@ -89,7 +94,7 @@ class SwaggerParser(object):
         def_spec = self.specification['definitions'][def_name]
 
         # Get properties example value
-        for prop_name, prop_spec in def_spec['properties'].iteritems():
+        for prop_name, prop_spec in def_spec['properties'].items():
             example = self.get_example_from_prop_spec(prop_spec)
             if example is not None:
                 self.definitions_example[def_name][prop_name] = example
@@ -115,13 +120,13 @@ class SwaggerParser(object):
                 int(value)
                 return True
             except ValueError:
-                return isinstance(value, (int, long)) and not isinstance(value, bool)
+                return isinstance(value, six.integer_types) and not isinstance(value, bool)
         elif type_def == 'number':
-            return isinstance(value, (float, int, long)) and not isinstance(value, bool)
+            return isinstance(value, (six.integer_types, float)) and not isinstance(value, bool)
         elif type_def == 'string':
-            return isinstance(value, (str, unicode, datetime.datetime))
+            return isinstance(value, (six.text_type, six.string_types, datetime.datetime))
         elif type_def == 'boolean':
-            return isinstance(value, bool) or (isinstance(value, (str, unicode)) and value.lower() in ['true', 'false'])
+            return isinstance(value, bool) or (isinstance(value, (six.text_type, six.string_types,)) and value.lower() in ['true', 'false'])
         else:
             return False
 
@@ -193,7 +198,7 @@ class SwaggerParser(object):
                 return example_dict[example_dict.keys()[0]]
             else:
                 example = {}
-                for example_name, example_value in example_dict.iteritems():
+                for example_name, example_value in example_dict.items():
                     example[example_name] = example_value
                 return example
 
@@ -247,7 +252,7 @@ class SwaggerParser(object):
                     return example_dict[example_dict.keys()[0]]
                 else:
                     return_value = {}
-                    for example_name, example_value in example_dict.iteritems():
+                    for example_name, example_value in example_dict.items():
                         return_value[example_name] = example_value
                     return [return_value]
 
@@ -292,7 +297,7 @@ class SwaggerParser(object):
 
             # Check no extra arg & type
             properties_dict = self.specification['definitions'][definition_name]['properties']
-            for key, value in dict_to_test.iteritems():
+            for key, value in dict_to_test.items():
                 if value is not None:
                     if key not in properties_dict:  # Extra arg
                         return False
@@ -345,7 +350,7 @@ class SwaggerParser(object):
 
         Get also the list of operationId.
         """
-        for path, path_spec in self.specification['paths'].iteritems():
+        for path, path_spec in self.specification['paths'].items():
             self.paths[path] = {}
 
             for action in path_spec.keys():
@@ -375,7 +380,7 @@ class SwaggerParser(object):
         Returns:
             The definition name corresponding to the ref.
         """
-        p = re.compile(ur'#\/definitions\/(.*)')
+        p = re.compile('#\/definitions\/(.*)')
         definition_name = re.sub(p, r'\1', ref)
         return definition_name
 
@@ -457,7 +462,7 @@ class SwaggerParser(object):
             True if the query is valid.
         """
         processed_params = []
-        for param_name, param_value in query.iteritems():
+        for param_name, param_value in query.items():
             if param_name in action_spec['parameters'].keys():
                 processed_params.append(param_name)
 
@@ -474,7 +479,7 @@ class SwaggerParser(object):
                     return False
 
         # Check required
-        if not all(param in processed_params for param, spec in action_spec['parameters'].iteritems()
+        if not all(param in processed_params for param, spec in action_spec['parameters'].items()
                    if spec['in'] == 'query' and 'required' in spec and spec['required']):
             return False
         return True
@@ -490,7 +495,7 @@ class SwaggerParser(object):
             True if the body is valid.
         """
         processed_params = []
-        for param_name, param_spec in action_spec['parameters'].iteritems():
+        for param_name, param_spec in action_spec['parameters'].items():
             if param_spec['in'] == 'body':
                 processed_params.append(param_name)
 
@@ -509,7 +514,7 @@ class SwaggerParser(object):
                         if not self.validate_definition(definition_name, body):
                             return False
         # Check required
-        if not all(param in processed_params for param, spec in action_spec['parameters'].iteritems()
+        if not all(param in processed_params for param, spec in action_spec['parameters'].items()
                    if spec['in'] == 'body' and 'required' in spec and spec['required']):
             return False
         return True
@@ -568,7 +573,7 @@ class SwaggerParser(object):
         path_name, path_spec = self.get_path_spec(path)
 
         if path_spec is not None and action in path_spec.keys():
-                for name, spec in path_spec[action]['parameters'].iteritems():
+                for name, spec in path_spec[action]['parameters'].items():
                     if spec['in'] == 'body':  # Get body parameter
                         if 'type' in spec.keys():
                             # Get value from type

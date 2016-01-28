@@ -25,12 +25,6 @@ def test_check_type(swagger_parser):
     assert not swagger_parser.check_type(int(5), 'string')
     assert not swagger_parser.check_type(int(5), 'boolean')
 
-    # Test long
-    assert swagger_parser.check_type(long(5), 'integer')
-    assert swagger_parser.check_type(long(5), 'number')
-    assert not swagger_parser.check_type(long(5), 'string')
-    assert not swagger_parser.check_type(long(5), 'boolean')
-
     # Test float
     assert swagger_parser.check_type(5.5, 'number')
     assert not swagger_parser.check_type(5.5, 'string')
