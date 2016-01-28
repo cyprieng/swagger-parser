@@ -31,6 +31,7 @@ setup(
     package_dir={'swagger_parser':
                  'swagger_parser'},
     include_package_data=True,
+    setup_requires=['pytest-runner'],
     install_requires=requirements,
     license="GPL",
     zip_safe=False,
