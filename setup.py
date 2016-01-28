@@ -9,10 +9,10 @@ except ImportError:
     from distutils.core import setup
 
 
-with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme_file:
+with open('README.md') as readme_file:
     readme = readme_file.read()
 
-with open(os.path.join(os.path.dirname(__file__), 'HISTORY.rst')) as history_file:
+with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [str(i.req) for i in parse_requirements(os.path.join(os.path.dirname(__file__), 'requirements.txt'), session=False)]
