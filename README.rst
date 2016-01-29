@@ -1,8 +1,14 @@
-=====
-Usage
-=====
+.. image:: https://travis-ci.org/Trax-air/swagger-parser.svg?branch=master
+   :alt: Travis status
+   :target: https://travis-ci.org/Trax-air/swagger-parser
 
-To use Swagger Parser in a project:
+swagger-parser
+==============
+
+Swagger-parser is a python module giving you access to some interesting data about your swagger file. Like getting a dictionary example from a definition name, get the definition of a dictionary...
+
+Example Usage
+-------------
 
 .. code:: python
 
@@ -33,3 +39,18 @@ To use Swagger Parser in a project:
 
   # Get an example of a correct body for a path
   parser.get_send_request_correct_body('/foo', 'post')
+
+Documentation
+-------------
+
+More documentation is available at https://swagger-parser.readthedocs.org/en/latest/.
+
+Setup
+-----
+
+`make install` or `pip install swagger-parser`
+
+License
+-------
+
+swagger-parser is licensed under http://opensource.org/licenses/GPL-3.0.
