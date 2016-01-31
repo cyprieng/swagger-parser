@@ -53,4 +53,4 @@ Setup
 License
 -------
 
-swagger-parser is licensed under http://opensource.org/licenses/GPL-3.0.
+swagger-parser is licensed under http://opensource.org/licenses/MIT.
