@@ -140,3 +140,4 @@ def test_get_request_data(swagger_parser, pet_definition_example):
 def test_get_send_request_correct_body(swagger_parser, pet_definition_example):
     assert swagger_parser.get_send_request_correct_body('/pets', 'post') == pet_definition_example
     assert swagger_parser.get_send_request_correct_body('/pets/findByStatus', 'get') is None
+    assert swagger_parser.get_send_request_correct_body('/users/username', 'put') == 'string'
