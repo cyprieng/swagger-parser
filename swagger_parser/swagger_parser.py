@@ -224,6 +224,8 @@ class SwaggerParser(object):
             else:
                 definition_name = self.get_definition_name_from_ref(prop_spec['schema']['items']['$ref'])
             return [self.definitions_example[definition_name]]
+        else:
+            return self.get_example_from_prop_spec(prop_spec['schema'])
 
     def _example_from_array_spec(self, prop_spec):
         """Get an example from a property specification of an array.
@@ -509,6 +511,10 @@ class SwaggerParser(object):
                         definition_name = self.get_definition_name_from_ref(param_spec['schema']['items']['$ref'])
                         if len(body) > 0 and not self.validate_definition(definition_name, body[0]):
                             return False
+                    elif 'type' in param_spec['schema'].keys():
+                        # Type but not array
+                        if not self.check_type(body, param_spec['schema']['type']):
+                            return False
                     else:
                         definition_name = self.get_definition_name_from_ref(param_spec['schema']['$ref'])
                         if not self.validate_definition(definition_name, body):
@@ -584,6 +590,9 @@ class SwaggerParser(object):
                                 # Get value from definition
                                 definition_name = self.get_definition_name_from_ref(spec['schema']['items']['$ref'])
                                 return [self.definitions_example[definition_name]]
+                            elif 'type' in spec['schema'].keys():
+                                # Type but not array
+                                return self.get_example_from_prop_spec(spec['schema'])
                             else:
                                 # Get value from definition
                                 definition_name = self.get_definition_name_from_ref(spec['schema']['$ref'])
