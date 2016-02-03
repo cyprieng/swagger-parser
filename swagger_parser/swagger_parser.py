@@ -536,6 +536,8 @@ class SwaggerParser(object):
             elif 'items' in resp_spec['schema'] and resp_spec['schema']['type'] == 'array':  # Array
                 definition_name = self.get_definition_name_from_ref(resp_spec['schema']['items']['$ref'])
                 return [self.definitions_example[definition_name]]
+            elif 'type' in resp_spec['schema']:
+                return self.get_example_from_prop_spec(resp_spec['schema'])
         else:
             return ''
 
