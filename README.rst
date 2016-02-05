@@ -10,6 +10,10 @@
 .. image:: https://www.versioneye.com/user/projects/56b4abef0a0ff50035ba82c2/badge.svg
   :alt: Dependency Status
   :target: https://www.versioneye.com/user/projects/56b4abef0a0ff50035ba82c2
+.. image:: https://img.shields.io/pypi/v/swagger-parser.svg
+    :target: https://pypi.python.org/pypi/swagger-parser/
+.. image:: https://img.shields.io/pypi/dw/swagger-parser.svg
+    :target: https://pypi.python.org/pypi/swagger-parser/
 
 swagger-parser
 ==============
