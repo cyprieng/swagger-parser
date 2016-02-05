@@ -511,10 +511,9 @@ class SwaggerParser(object):
                         definition_name = self.get_definition_name_from_ref(param_spec['schema']['items']['$ref'])
                         if len(body) > 0 and not self.validate_definition(definition_name, body[0]):
                             return False
-                    elif 'type' in param_spec['schema'].keys():
+                    elif 'type' in param_spec['schema'].keys() and not self.check_type(body, param_spec['schema']['type']):
                         # Type but not array
-                        if not self.check_type(body, param_spec['schema']['type']):
-                            return False
+                        return False
                     else:
                         definition_name = self.get_definition_name_from_ref(param_spec['schema']['$ref'])
                         if not self.validate_definition(definition_name, body):
