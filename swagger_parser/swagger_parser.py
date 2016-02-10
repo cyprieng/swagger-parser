@@ -563,7 +563,7 @@ class SwaggerParser(object):
                 try:
                     response[int(status_code)] = self.get_response_example(resp)
                 except ValueError:
-                    response['default'] = self.get_response_example(resp)
+                    response[status_code] = self.get_response_example(resp)
 
         # If there is no status_code add a default 400
         if response == {}:
