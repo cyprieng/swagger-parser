@@ -550,6 +550,7 @@ class SwaggerParser(object):
 
         Returns:
             A tuple with the default response data and status code
+            In case of default status_code, use 0
         """
         body = body or ''
         path_name, path_spec = self.get_path_spec(path)
@@ -559,7 +560,10 @@ class SwaggerParser(object):
         if path_spec is not None and action in path_spec.keys():
             for status_code in path_spec[action]['responses'].keys():
                 resp = path_spec[action]['responses'][status_code]
-                response[int(status_code)] = self.get_response_example(resp)
+                try:
+                    response[int(status_code)] = self.get_response_example(resp)
+                except ValueError:
+                    response[status_code] = self.get_response_example(resp)
 
         # If there is no status_code add a default 400
         if response == {}:
