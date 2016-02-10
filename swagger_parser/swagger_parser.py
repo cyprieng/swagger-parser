@@ -562,7 +562,7 @@ class SwaggerParser(object):
                 resp = path_spec[action]['responses'][status_code]
                 try:
                     response[int(status_code)] = self.get_response_example(resp)
-                except:
+                except ValueError:
                     response['default'] = self.get_response_example(resp)
 
         # If there is no status_code add a default 400
