@@ -367,6 +367,9 @@ class SwaggerParser(object):
                 if 'parameters' in path_spec[action].keys():
                     for parameter in path_spec[action]['parameters']:
                         # Add to parameters
+                        if parameter.get('$ref'):
+                            # expand paremeter from $ref if not specified inline
+                            parameter = self.specification['parameters'].get( parameter.get('$ref').split('/')[-1] )
                         self.paths[path][action]['parameters'][parameter['name']] = parameter
 
                 # Get responses
