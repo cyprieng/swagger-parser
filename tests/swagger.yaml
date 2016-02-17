@@ -151,12 +151,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: path
-          name: petId
-          description: ID of pet that needs to be fetched
-          required: true
-          type: integer
-          format: int64
+        - $ref: '#/parameters/pet_id'
       responses:
         "404":
           description: Pet not found
@@ -484,6 +479,16 @@ securityDefinitions:
     scopes:
       write_pets: modify pets in your account
       read_pets: read your pets
+
+parameters:
+  pet_id:
+    name: petId
+    description: Pet's Unique identifier
+    in: path
+    type: string
+    required: true
+    pattern: "^[a-zA-Z0-9-]+$"
+
 definitions:
   User:
     type: object
