@@ -150,8 +150,6 @@ paths:
       operationId: examples.api.api.getPetById
       produces:
         - application/json
-      parameters:
-        - $ref: '#/parameters/pet_id'
       responses:
         "404":
           description: Pet not found
@@ -177,11 +175,6 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: path
-          name: petId
-          description: ID of pet that needs to be updated
-          required: true
-          type: string
         - in: query
           name: name
           description: Updated name of the pet
@@ -211,13 +204,6 @@ paths:
       operationId: examples.api.api.deletePet
       produces:
         - application/json
-      parameters:
-        - in: path
-          name: petId
-          description: Pet id to delete
-          required: true
-          type: integer
-          format: int64
       responses:
         "204":
           description: Deleted
@@ -227,6 +213,8 @@ paths:
         - petstore_auth:
           - write_pets
           - read_pets
+    parameters:
+      - $ref: '#/parameters/pet_id'
   /stores/order:
     post:
       tags:
