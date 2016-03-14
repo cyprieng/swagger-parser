@@ -6,6 +6,7 @@ import json
 import re
 import six
 import yaml
+import codecs
 
 try:
     from StringIO import StringIO
@@ -46,7 +47,7 @@ class SwaggerParser(object):
             if swagger_path is not None:
                 # Open yaml file
                 arguments = {}
-                with open(swagger_path, 'r') as swagger_yaml:
+                with codecs.open(swagger_path, 'r', 'utf-8') as swagger_yaml:
                     swagger_template = swagger_yaml.read()
                     swagger_string = jinja2.Template(swagger_template).render(**arguments)
                     self.specification = yaml.load(swagger_string)
