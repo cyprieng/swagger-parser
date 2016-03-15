@@ -7,7 +7,7 @@ info:
 
     For this sample, you can use the api key `special-key` to test the authorization filters
     
-    NOTE: Swagger files mey contain non-acsii characters like µ, ü or ç and ñ, please save your file in UT8 to preserv them.
+    Swagger files may contain non-ascii characters like µ, ü or ç and ñ, please save your file in UTF-8 to preserve them.
     
   version: "1.0.0"
   title: Swagger Petstore
