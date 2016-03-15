@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import codecs
 import datetime
 import jinja2
 import json
 import re
 import six
 import yaml
-import codecs
 
 try:
     from StringIO import StringIO
