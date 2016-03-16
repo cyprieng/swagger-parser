@@ -27,6 +27,9 @@ class SwaggerParser(object):
         paths: dict of path with their actions, parameters, and responses.
     """
 
+    _HTTP_VERBS = set(['get', 'put', 'post', 'delete', 'options', 'head',
+                       'patch'])
+
     def __init__(self, swagger_path=None, swagger_dict=None, use_example=True):
         """Run parsing from either a file or a dict.
 
@@ -355,7 +358,15 @@ class SwaggerParser(object):
         for path, path_spec in self.specification['paths'].items():
             self.paths[path] = {}
 
+            # Add path-level parameters
+            default_parameters = {}
+            if 'parameters' in path_spec:
+                self._add_parameters(default_parameters, path_spec['parameters'])
+
             for action in path_spec.keys():
+                if action not in self._HTTP_VERBS:
+                    continue
+
                 self.paths[path][action] = {}
 
                 # Add to operation list
@@ -363,17 +374,25 @@ class SwaggerParser(object):
                     self.operation[path_spec[action]['operationId']] = (path, action, path_spec[action]['tags'][0])
 
                 # Get parameters
-                self.paths[path][action]['parameters'] = {}
+                self.paths[path][action]['parameters'] = default_parameters.copy()
                 if 'parameters' in path_spec[action].keys():
-                    for parameter in path_spec[action]['parameters']:
-                        # Add to parameters
-                        if parameter.get('$ref'):
-                            # expand paremeter from $ref if not specified inline
-                            parameter = self.specification['parameters'].get(parameter.get('$ref').split('/')[-1])
-                        self.paths[path][action]['parameters'][parameter['name']] = parameter
+                    self._add_parameters(self.paths[path][action]['parameters'], path_spec[action]['parameters'])
 
                 # Get responses
                 self.paths[path][action]['responses'] = path_spec[action]['responses']
+
+    def _add_parameters(self, parameter_map, parameter_list):
+        """Populates the given parameter map with the list of parameters provided, resolving any reference objects encountered.
+
+        Args:
+            parameter_map: mapping from parameter names to parameter objects
+            parameter_list: list of either parameter objects or reference objects
+        """
+        for parameter in parameter_list:
+            if parameter.get('$ref'):
+                # expand parameter from $ref if not specified inline
+                parameter = self.specification['parameters'].get(parameter.get('$ref').split('/')[-1])
+            parameter_map[parameter['name']] = parameter
 
     @staticmethod
     def get_definition_name_from_ref(ref):

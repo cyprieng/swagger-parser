@@ -106,19 +106,22 @@ def test_get_paths_data(swagger_parser, path_data_example):
     swagger_parser.get_paths_data()
     assert len(swagger_parser.paths) == 12
     assert swagger_parser.paths['/pets'] == path_data_example
+    pet_id_param = {
+        'name': 'petId',
+        'in': 'path',
+        'pattern': '^[a-zA-Z0-9-]+$',
+        'required': True,
+        'type': 'string',
+        'description': "Pet's Unique identifier",
+    }
     assert swagger_parser.paths['/pets/{petId}']['get'] == \
         {'responses': {'200': {'description': 'successful operation',
                                'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'}},
                        '404': {'description': 'Pet not found'},
                        '400': {'description': 'Invalid ID supplied'}},
-         'parameters': {'petId': {
-             'name': 'petId',
-             'in': 'path',
-             'pattern': '^[a-zA-Z0-9-]+$',
-             'required': True,
-             'type': 'string',
-             'description': "Pet's Unique identifier",
-         }}}
+         'parameters': {'petId': pet_id_param}}
+    assert swagger_parser.paths['/pets/{petId}']['post']['parameters']['petId'] == pet_id_param
+    assert swagger_parser.paths['/pets/{petId}']['delete']['parameters']['petId'] == pet_id_param
 
 
 def test_get_definition_name_from_ref(swagger_parser):
