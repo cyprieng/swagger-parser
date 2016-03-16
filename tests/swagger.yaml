@@ -406,8 +406,6 @@ paths:
         "400":
           description: Invalid username supplied
     put:
-      tags:
-        - user
       summary: Updated user
       description: This can only be done by the logged in user.
       operationId: examples.api.api.updateUser
@@ -435,8 +433,7 @@ paths:
         "400":
           description: Invalid user supplied
     delete:
-      tags:
-        - user
+      tags: []
       summary: Delete user
       description: This can only be done by the logged in user.
       operationId: examples.api.api.deleteUser
