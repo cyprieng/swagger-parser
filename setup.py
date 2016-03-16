@@ -19,7 +19,7 @@ test_requirements = [str(i.req) for i in parse_requirements('requirements_dev.tx
 
 setup(
     name='swagger_parser',
-    version='0.1.5',
+    version='0.1.6',
     description="Swagger parser giving useful informations about your swagger files",
     long_description=readme + '\n\n' + history,
     author="Cyprien Guillemot",
