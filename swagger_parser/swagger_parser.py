@@ -27,8 +27,8 @@ class SwaggerParser(object):
         paths: dict of path with their actions, parameters, and responses.
     """
 
-    _HTTP_VERBS = set('get', 'put', 'post', 'delete', 'options', 'head',
-                      'patch')
+    _HTTP_VERBS = set(['get', 'put', 'post', 'delete', 'options', 'head',
+                       'patch'])
 
     def __init__(self, swagger_path=None, swagger_dict=None, use_example=True):
         """Run parsing from either a file or a dict.
