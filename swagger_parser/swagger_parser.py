@@ -371,7 +371,8 @@ class SwaggerParser(object):
 
                 # Add to operation list
                 if 'operationId' in path_spec[action].keys():
-                    self.operation[path_spec[action]['operationId']] = (path, action, path_spec[action]['tags'][0])
+                    tag = path_spec[action]['tags'][0] if 'tags' in path_spec[action].keys() and path_spec[action]['tags'] else None
+                    self.operation[path_spec[action]['operationId']] = (path, action, tag)
 
                 # Get parameters
                 self.paths[path][action]['parameters'] = default_parameters.copy()
