@@ -35,7 +35,7 @@ paths:
       parameters:
         - in: body
           name: body
-          description: Pet object that needs to be added to the store
+          description: Pet object that needs to be added to the store (it may be a µPig or a Smørebröd)
           required: false
           schema:
             $ref: "#/definitions/Pet"
