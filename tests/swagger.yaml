@@ -133,7 +133,7 @@ paths:
           collectionFormat: multi
       responses:
         "200":
-          description: successful operation
+          description: successful µ-øperätioñ
           schema:
             type: array
             items:
