@@ -107,7 +107,7 @@ def test_get_paths_data(swagger_parser, path_data_example):
     assert len(swagger_parser.paths) == 12
     assert swagger_parser.paths['/pets'] == path_data_example
     assert swagger_parser.paths['/pets/{petId}']['get'] == \
-        {'responses': {'200': {'description': 'successful operation',
+        {'responses': {'200': {'description': 'successful µ-øperätioñ',
                                'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'}},
                        '404': {'description': 'Pet not found'},
                        '400': {'description': 'Invalid ID supplied'}},
