@@ -133,7 +133,7 @@ paths:
           collectionFormat: multi
       responses:
         "200":
-          description: successful µ-øperätioñ
+          description: successful operation
           schema:
             type: array
             items:
@@ -159,7 +159,7 @@ paths:
         "404":
           description: Pet not found
         "200":
-          description: successful operation
+          description: successful µ-øperätioñ
           schema:
             $ref: "#/definitions/Pet"
         "400":
