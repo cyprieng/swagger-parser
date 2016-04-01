@@ -43,7 +43,7 @@ def path_data_example():
     }, 'parameters': {'body': {
         'required': False,
         'in': 'body',
-        'description': 'Pet object that needs to be added to the store (it may be a µPig or a Smørebröd)',
+        'description': u'Pet object that needs to be added to the store (it may be a µPig or a Smørebröd)',
         'name': 'body',
         'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'},
     }}}, 'post': {'responses': {'201': {'description': 'Created',
@@ -53,7 +53,7 @@ def path_data_example():
                   'parameters': {'body': {
                       'required': False,
                       'in': 'body',
-                      'description': 'Pet object that needs to be added to the store (it may be a µPig or a Smørebröd)',
+                      'description': u'Pet object that needs to be added to the store (it may be a µPig or a Smørebröd)',
                       'name': 'body',
                       'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'},
                   }}}}
