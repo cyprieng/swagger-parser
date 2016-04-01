@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 
 from swagger_parser import SwaggerParser
@@ -42,7 +43,7 @@ def path_data_example():
     }, 'parameters': {'body': {
         'required': False,
         'in': 'body',
-        'description': 'Pet object that needs to be added to the store',
+        'description': u'Pet object that needs to be added to the store',
         'name': 'body',
         'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'},
     }}}, 'post': {'responses': {'201': {'description': 'Created',
@@ -52,7 +53,7 @@ def path_data_example():
                   'parameters': {'body': {
                       'required': False,
                       'in': 'body',
-                      'description': 'Pet object that needs to be added to the store',
+                      'description': u'Pet object that needs to be added to the store (it may be a µPig or a Smørebröd)',
                       'name': 'body',
                       'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'},
                   }}}}

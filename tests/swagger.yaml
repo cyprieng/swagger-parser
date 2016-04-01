@@ -6,6 +6,9 @@ info:
     [Learn about Swagger](http://swagger.wordnik.com) or join the IRC channel `#swagger` on irc.freenode.net.
 
     For this sample, you can use the api key `special-key` to test the authorization filters
+    
+    Swagger files may contain non-ascii characters like µ, ü or ç and ñ, please save your file in UTF-8 to preserve them.
+    
   version: "1.0.0"
   title: Swagger Petstore
   termsOfService: http://helloreverb.com/terms/
@@ -32,7 +35,7 @@ paths:
       parameters:
         - in: body
           name: body
-          description: Pet object that needs to be added to the store
+          description: Pet object that needs to be added to the store (it may be a µPig or a Smørebröd)
           required: false
           schema:
             $ref: "#/definitions/Pet"
@@ -154,7 +157,7 @@ paths:
         "404":
           description: Pet not found
         "200":
-          description: successful operation
+          description: successful µ-øperätioñ
           schema:
             $ref: "#/definitions/Pet"
         "400":
