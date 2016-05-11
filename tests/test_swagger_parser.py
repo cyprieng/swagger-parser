@@ -105,7 +105,7 @@ def test_validate_definition(swagger_parser, pet_definition_example):
 def test_get_paths_data(swagger_parser, path_data_example):
     swagger_parser.get_paths_data()
     assert len(swagger_parser.paths) == 12
-    assert swagger_parser.paths['/pets'] == path_data_example
+    assert swagger_parser.paths['/v2/pets'] == path_data_example
     pet_id_param = {
         'name': 'petId',
         'in': 'path',
@@ -114,14 +114,14 @@ def test_get_paths_data(swagger_parser, path_data_example):
         'type': 'string',
         'description': "Pet's Unique identifier",
     }
-    assert swagger_parser.paths['/pets/{petId}']['get'] == \
+    assert swagger_parser.paths['/v2/pets/{petId}']['get'] == \
         {'responses': {'200': {'description': u'successful µ-øperätioñ',
                                'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'}},
                        '404': {'description': 'Pet not found'},
                        '400': {'description': 'Invalid ID supplied'}},
          'parameters': {'petId': pet_id_param}}
-    assert swagger_parser.paths['/pets/{petId}']['post']['parameters']['petId'] == pet_id_param
-    assert swagger_parser.paths['/pets/{petId}']['delete']['parameters']['petId'] == pet_id_param
+    assert swagger_parser.paths['/v2/pets/{petId}']['post']['parameters']['petId'] == pet_id_param
+    assert swagger_parser.paths['/v2/pets/{petId}']['delete']['parameters']['petId'] == pet_id_param
 
 
 def test_get_definition_name_from_ref(swagger_parser):
@@ -129,31 +129,31 @@ def test_get_definition_name_from_ref(swagger_parser):
 
 
 def test_get_path_spec(swagger_parser):
-    assert swagger_parser.get_path_spec('/pets')[0] == '/pets'
-    assert swagger_parser.get_path_spec('/users/createWithList')[0] == '/users/createWithList'
-    assert swagger_parser.get_path_spec('/stores/order/1253')[0] == '/stores/order/{orderId}'
-    assert swagger_parser.get_path_spec('/stores/order/1253/123')[0] is None
-    assert swagger_parser.get_path_spec('/error')[0] is None
+    assert swagger_parser.get_path_spec('/v2/pets')[0] == '/v2/pets'
+    assert swagger_parser.get_path_spec('/v2/users/createWithList')[0] == '/v2/users/createWithList'
+    assert swagger_parser.get_path_spec('/v2/stores/order/1253')[0] == '/v2/stores/order/{orderId}'
+    assert swagger_parser.get_path_spec('/v2/stores/order/1253/123')[0] is None
+    assert swagger_parser.get_path_spec('/v2/error')[0] is None
 
 
 def test_validate_request(swagger_parser, pet_definition_example):
     assert not swagger_parser.validate_request('error', 'get')
-    assert not swagger_parser.validate_request('/pets', 'error')
-    assert not swagger_parser.validate_request('/pets', 'post', body={})
+    assert not swagger_parser.validate_request('/v2/pets', 'error')
+    assert not swagger_parser.validate_request('/v2/pets', 'post', body={})
 
-    assert swagger_parser.validate_request('/pets', 'post', body=pet_definition_example)
+    assert swagger_parser.validate_request('/v2/pets', 'post', body=pet_definition_example)
 
-    assert not swagger_parser.validate_request('/pets/findByTags', 'get', query={'tags': 'string'})
-    assert swagger_parser.validate_request('/pets/findByTags', 'get', query={'tags': ['string']})
+    assert not swagger_parser.validate_request('/v2/pets/findByTags', 'get', query={'tags': 'string'})
+    assert swagger_parser.validate_request('/v2/pets/findByTags', 'get', query={'tags': ['string']})
 
 
 def test_get_request_data(swagger_parser, pet_definition_example):
     assert swagger_parser.get_request_data('error', 'get') == {400: ''}
-    assert swagger_parser.get_request_data('/pets/123', 'get') == {200: pet_definition_example, 400: '', 404: ''}
-    assert swagger_parser.get_request_data('/pets/123', 'error') == {400: ''}
+    assert swagger_parser.get_request_data('/v2/pets/123', 'get') == {200: pet_definition_example, 400: '', 404: ''}
+    assert swagger_parser.get_request_data('/v2/pets/123', 'error') == {400: ''}
 
 
 def test_get_send_request_correct_body(swagger_parser, pet_definition_example):
-    assert swagger_parser.get_send_request_correct_body('/pets', 'post') == pet_definition_example
-    assert swagger_parser.get_send_request_correct_body('/pets/findByStatus', 'get') is None
-    assert swagger_parser.get_send_request_correct_body('/users/username', 'put') == 'string'
+    assert swagger_parser.get_send_request_correct_body('/v2/pets', 'post') == pet_definition_example
+    assert swagger_parser.get_send_request_correct_body('/v2/pets/findByStatus', 'get') is None
+    assert swagger_parser.get_send_request_correct_body('/v2/users/username', 'put') == 'string'

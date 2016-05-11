@@ -359,6 +359,7 @@ class SwaggerParser(object):
         Get also the list of operationId.
         """
         for path, path_spec in self.specification['paths'].items():
+            path = u'{0}{1}'.format(self.base_path, path)
             self.paths[path] = {}
 
             # Add path-level parameters
