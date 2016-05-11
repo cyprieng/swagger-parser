@@ -160,6 +160,8 @@ class SwaggerParser(object):
         else:  # Basic types
             if 'format' in prop_spec.keys() and prop_spec['format'] == 'date-time':
                 return self._get_example_from_basic_type('datetime')[0]
+            elif isinstance(prop_spec['type'], list):  # Type is a list
+                return self._get_example_from_basic_type(prop_spec['type'][0])[0]
             else:
                 return self._get_example_from_basic_type(prop_spec['type'])[0]
 
