@@ -6,9 +6,9 @@ info:
     [Learn about Swagger](http://swagger.wordnik.com) or join the IRC channel `#swagger` on irc.freenode.net.
 
     For this sample, you can use the api key `special-key` to test the authorization filters
-    
+
     Swagger files may contain non-ascii characters like µ, ü or ç and ñ, please save your file in UTF-8 to preserve them.
-    
+
   version: "1.0.0"
   title: Swagger Petstore
   termsOfService: http://helloreverb.com/terms/
@@ -485,7 +485,9 @@ definitions:
         type: integer
         format: int64
       username:
-        type: string
+        type:
+          - "string"
+          - "null"
       firstName:
         type: string
       lastName:
