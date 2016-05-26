@@ -97,6 +97,12 @@ class SwaggerParser(object):
         self.definitions_example[def_name] = {}
         def_spec = self.specification['definitions'][def_name]
 
+        if 'type' in def_spec and def_spec['type']=='array':
+            if 'items' in def_spec:
+                item = self.get_example_from_prop_spec(def_spec['items'])
+                self.definitions_example[def_name] = [ item ]
+                return True
+
         # Get properties example value
         for prop_name, prop_spec in def_spec['properties'].items():
             example = self.get_example_from_prop_spec(prop_spec)
