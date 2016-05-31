@@ -212,13 +212,8 @@ class SwaggerParser(object):
             example_dict = self.definitions_example[definition_name]
             if not isinstance(example_dict, dict):
                 return example_dict
-            if len(example_dict) == 1:
-                return example_dict
-            else:
-                example = {}
-                for example_name, example_value in example_dict.items():
-                    example[example_name] = example_value
-                return example
+            example = { example_name: example_value for example_name, example_value in example_dict.items() }
+            return example
 
     def _example_from_complex_def(self, prop_spec):
         """Get an example from a property specification.
