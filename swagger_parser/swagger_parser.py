@@ -213,7 +213,7 @@ class SwaggerParser(object):
             if not isinstance(example_dict, dict):
                 return example_dict
             if len(example_dict) == 1:
-                return example_dict[example_dict.keys()[0]]
+                return example_dict
             else:
                 example = {}
                 for example_name, example_value in example_dict.items():
