@@ -97,15 +97,14 @@ class SwaggerParser(object):
         self.definitions_example[def_name] = {}
         def_spec = self.specification['definitions'][def_name]
 
+        if 'type' in def_spec and def_spec['type']=='array' and 'items' in def_spec:
+            item = self.get_example_from_prop_spec(def_spec['items'])
+            self.definitions_example[def_name] = [ item ]
+            return True
+
         if 'properties' not in def_spec:
-            if 'type' in def_spec and def_spec['type']=='array':
-                if 'items' in def_spec:
-                    item = self.get_example_from_prop_spec(def_spec['items'])
-                    self.definitions_example[def_name] = [ item ]
-                    return True
-            else:
-                self.definitions_example[def_name] = self.get_example_from_prop_spec(def_spec)
-                return True
+            self.definitions_example[def_name] = self.get_example_from_prop_spec(def_spec)
+            return True
 
         # Get properties example value
         for prop_name, prop_spec in def_spec['properties'].items():
@@ -212,7 +211,7 @@ class SwaggerParser(object):
             example_dict = self.definitions_example[definition_name]
             if not isinstance(example_dict, dict):
                 return example_dict
-            example = { example_name: example_value for example_name, example_value in example_dict.items() }
+            example = dict((example_name, example_value) for example_name, example_value in example_dict.items() )
             return example
 
     def _example_from_complex_def(self, prop_spec):
