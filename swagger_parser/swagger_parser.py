@@ -97,6 +97,15 @@ class SwaggerParser(object):
         self.definitions_example[def_name] = {}
         def_spec = self.specification['definitions'][def_name]
 
+        if def_spec.get('type') == 'array' and 'items' in def_spec:
+            item = self.get_example_from_prop_spec(def_spec['items'])
+            self.definitions_example[def_name] = [ item ]
+            return True
+
+        if 'properties' not in def_spec:
+            self.definitions_example[def_name] = self.get_example_from_prop_spec(def_spec)
+            return True
+
         # Get properties example value
         for prop_name, prop_spec in def_spec['properties'].items():
             example = self.get_example_from_prop_spec(prop_spec)
@@ -200,13 +209,10 @@ class SwaggerParser(object):
 
         if self.build_one_definition_example(definition_name):
             example_dict = self.definitions_example[definition_name]
-            if len(example_dict) == 1:
-                return example_dict[example_dict.keys()[0]]
-            else:
-                example = {}
-                for example_name, example_value in example_dict.items():
-                    example[example_name] = example_value
-                return example
+            if not isinstance(example_dict, dict):
+                return example_dict
+            example = dict((example_name, example_value) for example_name, example_value in example_dict.items() )
+            return example
 
     def _example_from_complex_def(self, prop_spec):
         """Get an example from a property specification.
@@ -219,7 +225,7 @@ class SwaggerParser(object):
         Returns:
             An example.
         """
-        if 'type' not in prop_spec['schema']:
+        if 'schema' in prop_spec and 'type' not in prop_spec['schema']:
             definition_name = self.get_definition_name_from_ref(prop_spec['schema']['$ref'])
             if self.build_one_definition_example(definition_name):
                 return self.definitions_example[definition_name]
@@ -250,7 +256,7 @@ class SwaggerParser(object):
                 return self._get_example_from_basic_type(prop_spec['items']['type'])
 
         # Array with definition
-        elif '$ref' in prop_spec['items'].keys() or '$ref' in prop_spec['schema']['items'].keys():
+        elif '$ref' in prop_spec['items'].keys() or ('schema' in prop_spec and'$ref' in prop_spec['schema']['items'].keys()):
             # Get value from definition
             definition_name = self.get_definition_name_from_ref(prop_spec['items']['$ref']) or \
                 self.get_definition_name_from_ref(prop_spec['schema']['items']['$ref'])
@@ -263,6 +269,13 @@ class SwaggerParser(object):
                     for example_name, example_value in example_dict.items():
                         return_value[example_name] = example_value
                     return [return_value]
+        elif 'properties' in prop_spec['items']:
+            prop_example = {}
+            for prop_name, prop_spec in prop_spec['items']['properties'].items():
+                example = self.get_example_from_prop_spec(prop_spec)
+                if example is not None:
+                    prop_example[prop_name] = example
+            return [ prop_example ]
 
     def get_dict_definition(self, dict, get_list=False):
         """Get the definition name of the given dict.

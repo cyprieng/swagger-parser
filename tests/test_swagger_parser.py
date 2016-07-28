@@ -157,3 +157,16 @@ def test_get_send_request_correct_body(swagger_parser, pet_definition_example):
     assert swagger_parser.get_send_request_correct_body('/v2/pets', 'post') == pet_definition_example
     assert swagger_parser.get_send_request_correct_body('/v2/pets/findByStatus', 'get') is None
     assert swagger_parser.get_send_request_correct_body('/v2/users/username', 'put') == 'string'
+
+def test_array_definitions(swagger_array_parser):
+    swagger_array_parser.build_definitions_example()
+
+    stringArray = swagger_array_parser.definitions_example['StringArray']
+    widgetArray = swagger_array_parser.definitions_example['WidgetArray']
+    widget = swagger_array_parser.definitions_example['Widget']
+
+    assert isinstance(stringArray, list)
+    assert stringArray[0] == 'string'
+
+    assert isinstance(widgetArray, list)
+    assert widgetArray[0] == widget

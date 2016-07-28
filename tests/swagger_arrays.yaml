@@ -1,0 +1,37 @@
+---
+swagger: "2.0"
+info:
+  version: "0.0.1"
+  title: "Test array definition"
+paths:
+  /path1:
+    get:
+      responses:
+        "200":
+          description: "Response contains string of arrays"
+          schema:
+            $ref: "#/definitions/StringArray"
+  /path2:
+    get:
+      responses:
+        "200":
+          description: "Response contains string of arrays"
+          schema:
+            $ref: "#/definitions/WidgetArray"
+
+definitions:
+  StringArray:
+    type: "array"
+    items:
+      type: "string"
+  WidgetArray:
+    type: "array"
+    items:
+      $ref: "#/definitions/Widget"
+  Widget:
+    type: "object"
+    properties:
+      prop1:
+        type: string
+      prop2:
+        type: string

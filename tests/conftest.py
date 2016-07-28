@@ -57,3 +57,7 @@ def path_data_example():
                       'name': 'body',
                       'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'},
                   }}}}
+
+@pytest.fixture
+def swagger_array_parser():
+    return SwaggerParser('tests/swagger_arrays.yaml')
