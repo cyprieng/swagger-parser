@@ -397,7 +397,7 @@ class SwaggerParser(object):
                     #       URL paths and actions should encode to UTF-8 safely.
                     import hashlib
                     h = hashlib.sha256()
-                    h.update("%s|%s".encode('utf-8') % (action, path))
+                    h.update(("%s|%s" % (action, path)).encode('utf-8'))
                     self.generated_operation[h.hexdigest()] = (path, action, tag)
 
                 # Get parameters
