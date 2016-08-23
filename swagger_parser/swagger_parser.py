@@ -73,6 +73,7 @@ class SwaggerParser(object):
         self.build_definitions_example()
         self.paths = {}
         self.operation = {}
+        self.generated_operation = {}
         self.get_paths_data()
 
     def build_definitions_example(self):
@@ -387,9 +388,14 @@ class SwaggerParser(object):
                 self.paths[path][action] = {}
 
                 # Add to operation list
+                tag = path_spec[action]['tags'][0] if 'tags' in path_spec[action].keys() and path_spec[action]['tags'] else None
                 if 'operationId' in path_spec[action].keys():
-                    tag = path_spec[action]['tags'][0] if 'tags' in path_spec[action].keys() and path_spec[action]['tags'] else None
                     self.operation[path_spec[action]['operationId']] = (path, action, tag)
+                else:
+                    import hashlib
+                    h = hashlib.sha256()
+                    h.update("%s|%s" % (action, path))
+                    self.generated_operation[h.hexdigest()] = (path, action, tag)
 
                 # Get parameters
                 self.paths[path][action]['parameters'] = default_parameters.copy()
