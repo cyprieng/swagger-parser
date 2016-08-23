@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 def test_build_definitions_example(swagger_parser, pet_definition_example):
     # Test definitions_example
     swagger_parser.build_definitions_example()
@@ -77,6 +76,24 @@ def test_get_example_from_prop_spec(swagger_parser):
     prop_spec['items']['$ref'] = '#/definitions/Tag'
     assert swagger_parser.get_example_from_prop_spec(prop_spec) == [{'id': 42, 'name': 'string'}]
 
+    # Inline complex
+    prop_spec = {
+      'type': 'object',
+      'properties': {
+        'error': {
+          'type': 'object',
+          'properties': {
+            'code': { 'type': 'string' },
+            'title': { 'type': 'string' },
+            'detail': { 'type': 'string' },
+          },
+          'required': ['code', 'title', 'detail'],
+        },
+      },
+      'required': ['error'],
+    }
+    example = swagger_parser.get_example_from_prop_spec(prop_spec)
+    assert example == [{'error': {'code': 'string', 'detail': 'string', 'title': 'string'}}]
 
 def test_get_dict_definition(swagger_parser, pet_definition_example):
     assert swagger_parser.get_dict_definition(pet_definition_example) == 'Pet'
