@@ -178,7 +178,13 @@ class SwaggerParser(object):
                 return self._get_example_from_basic_type(prop_spec['type'])[0]
 
     def _get_example_from_properties(self, spec):
-        """
+        """Get example from the properties of an object defined inline.
+
+        Args:
+            prop_spec: property specification you want an example of.
+
+        Returns:
+            An example.
         """
         example = {}
         required = spec.get('required', spec['properties'].keys())
