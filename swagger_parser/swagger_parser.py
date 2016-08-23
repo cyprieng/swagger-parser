@@ -392,9 +392,12 @@ class SwaggerParser(object):
                 if 'operationId' in path_spec[action].keys():
                     self.operation[path_spec[action]['operationId']] = (path, action, tag)
                 else:
+                    # Note: the encoding chosen below isn't very important in this
+                    #       case; what matters is a byte string that is unique.
+                    #       URL paths and actions should encode to UTF-8 safely.
                     import hashlib
                     h = hashlib.sha256()
-                    h.update("%s|%s" % (action, path))
+                    h.update("%s|%s".encode('utf-8') % (action, path))
                     self.generated_operation[h.hexdigest()] = (path, action, tag)
 
                 # Get parameters
