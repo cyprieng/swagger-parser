@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 
+def test_inline_examples(inline_parser, inline_example):
+    assert inline_parser.generated_operation == inline_example
+
+
 def test_build_definitions_example(swagger_parser, pet_definition_example):
     # Test definitions_example
     swagger_parser.build_definitions_example()
