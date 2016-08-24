@@ -431,13 +431,8 @@ class SwaggerParser(object):
                     #       case; what matters is a byte string that is unique.
                     #       URL paths and http methods should encode to UTF-8 safely.
                     h = hashlib.sha256()
-<<<<<<< HEAD
-                    h.update(("%s|%s" % (action, path)).encode('utf-8'))
-                    self.generated_operation[h.hexdigest()] = (path, action, tag)
-=======
                     h.update(("{0}|{1}".format(http_method, path)).encode('utf-8'))
                     self.generated_operation[h.hexdigest()] = (path, http_method, tag)
->>>>>>> 13c4e04... amend me
 
                 # Get parameters
                 self.paths[path][http_method]['parameters'] = default_parameters.copy()
