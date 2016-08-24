@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
@@ -88,9 +87,9 @@ def test_get_example_from_prop_spec(swagger_parser):
         'error': {
           'type': 'object',
           'properties': {
-            'code': { 'type': 'string' },
-            'title': { 'type': 'string' },
-            'detail': { 'type': 'string' },
+            'code': {'type': 'string'},
+            'title': {'type': 'string'},
+            'detail': {'type': 'string'},
           },
           'required': ['code', 'title', 'detail'],
         },
@@ -99,6 +98,7 @@ def test_get_example_from_prop_spec(swagger_parser):
     }
     example = swagger_parser.get_example_from_prop_spec(prop_spec)
     assert example == [{'error': {'code': 'string', 'detail': 'string', 'title': 'string'}}]
+
 
 def test_get_dict_definition(swagger_parser, pet_definition_example):
     assert swagger_parser.get_dict_definition(pet_definition_example) == 'Pet'
@@ -179,6 +179,7 @@ def test_get_send_request_correct_body(swagger_parser, pet_definition_example):
     assert swagger_parser.get_send_request_correct_body('/v2/pets', 'post') == pet_definition_example
     assert swagger_parser.get_send_request_correct_body('/v2/pets/findByStatus', 'get') is None
     assert swagger_parser.get_send_request_correct_body('/v2/users/username', 'put') == 'string'
+
 
 def test_array_definitions(swagger_array_parser):
     swagger_array_parser.build_definitions_example()
