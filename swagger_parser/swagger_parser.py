@@ -77,7 +77,7 @@ class SwaggerParser(object):
 
     def build_definitions_example(self):
         """Parse all definitions in the swagger specification."""
-        for def_name, def_spec in self.specification['definitions'].items():
+        for def_name, def_spec in self.specification.get('definitions', {}).items():
             self.build_one_definition_example(def_name)
 
     def build_one_definition_example(self, def_name):
