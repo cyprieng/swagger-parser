@@ -8,6 +8,10 @@ from swagger_parser import SwaggerParser
 def swagger_parser():
     return SwaggerParser('tests/swagger.yaml')
 
+@pytest.fixture
+def inline_parser():
+    return SwaggerParser('tests/inline.yaml')
+
 
 @pytest.fixture
 def pet_definition_example():
@@ -29,6 +33,13 @@ def pet_definition_example():
             'string2'
         ],
         'id': 42
+    }
+
+
+@pytest.fixture
+def inline_example():
+    return {
+        '3bd818fb7d55daf2fb8bf3354c061f9ba7f8cece39b30bdcb7e05551053ec2e8': ('/test', 'post', None)
     }
 
 

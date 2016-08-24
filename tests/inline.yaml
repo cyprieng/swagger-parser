@@ -1,0 +1,43 @@
+swagger: '2.0'
+info:
+  version: '2016-01-19T11:24:50Z'
+  title: authentication tests
+schemes:
+- http
+paths:
+  /test:
+    post:
+      summary: Post something complex
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: complex
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            foo:
+              type: object
+              properties:
+                bar:
+                  type: string
+                baz:
+                  type: integer
+              required:
+              - bar
+              - baz
+          required:
+          - foo
+          example:
+            foo:
+              bar: 'hello'
+              baz: 123
+      responses:
+        '201':
+          description: Created
+        default:
+          description: Not created
+
