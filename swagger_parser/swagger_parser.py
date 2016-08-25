@@ -163,6 +163,8 @@ class SwaggerParser(object):
             return self._example_from_definition(prop_spec)
         elif 'type' not in prop_spec:  # Complex type
             return self._example_from_complex_def(prop_spec)
+        elif prop_spec['type'] == 'object': # From properties, without references
+          return [self._get_example_from_properties(prop_spec)]
         elif prop_spec['type'] == 'array':  # Array
             return self._example_from_array_spec(prop_spec)
         elif prop_spec['type'] == 'file':  # File
@@ -174,6 +176,32 @@ class SwaggerParser(object):
                 return self._get_example_from_basic_type(prop_spec['type'][0])[0]
             else:
                 return self._get_example_from_basic_type(prop_spec['type'])[0]
+
+    def _get_example_from_properties(self, spec):
+        """Get example from the properties of an object defined inline.
+
+        Args:
+            prop_spec: property specification you want an example of.
+
+        Returns:
+            An example.
+        """
+        example = {}
+        required = spec.get('required', spec['properties'].keys())
+        for inner_name, inner_spec in spec['properties'].items():
+            if inner_name not in required:
+                continue
+
+            partial = self.get_example_from_prop_spec(inner_spec)
+            # While get_example_from_prop_spec is supposed to return a list,
+            # we don't actually want that when recursing to build from
+            # properties
+            if isinstance(partial, list):
+                partial = partial[0]
+
+            example[inner_name] = partial
+        return example
+
 
     @staticmethod
     def _get_example_from_basic_type(type):
