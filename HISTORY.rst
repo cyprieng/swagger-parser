@@ -2,6 +2,13 @@
 History
 =======
 
+0.1.10 (2016-8-25)
+------------------
+
+* Don't choke if there are no definitions
+* Generate operations without operationId
+* Generate example from properties
+
 0.1.9 (2016-7-28)
 ------------------
 
