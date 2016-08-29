@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# -*- coding:utf-8 -*-
+
+from copy import deepcopy
 
 
 def test_inline_examples(inline_parser, inline_example):
@@ -124,26 +126,15 @@ def test_validate_definition(swagger_parser, pet_definition_example):
     assert not swagger_parser.validate_definition('Pet', pet_definition_example)
 
 
-def test_get_paths_data(swagger_parser, path_data_example):
+def test_get_paths_data(swagger_parser, post_put_path_data, get_path_data):
     swagger_parser.get_paths_data()
     assert len(swagger_parser.paths) == 12
-    assert swagger_parser.paths['/v2/pets'] == path_data_example
-    pet_id_param = {
-        'name': 'petId',
-        'in': 'path',
-        'pattern': '^[a-zA-Z0-9-]+$',
-        'required': True,
-        'type': 'string',
-        'description': "Pet's Unique identifier",
-    }
-    assert swagger_parser.paths['/v2/pets/{petId}']['get'] == \
-        {'responses': {'200': {'description': u'successful µ-øperätioñ',
-                               'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'}},
-                       '404': {'description': 'Pet not found'},
-                       '400': {'description': 'Invalid ID supplied'}},
-         'parameters': {'petId': pet_id_param}}
-    assert swagger_parser.paths['/v2/pets/{petId}']['post']['parameters']['petId'] == pet_id_param
-    assert swagger_parser.paths['/v2/pets/{petId}']['delete']['parameters']['petId'] == pet_id_param
+    assert swagger_parser.paths['/v2/pets'] == post_put_path_data
+    assert swagger_parser.paths['/v2/pets/{petId}']['get'] == get_path_data
+    post_pet_id = swagger_parser.paths['/v2/pets/{petId}']['post']['parameters']['petId']
+    delete_pet_id = swagger_parser.paths['/v2/pets/{petId}']['delete']['parameters']['petId']
+    assert post_pet_id == get_path_data['parameters']['petId']
+    assert delete_pet_id == get_path_data['parameters']['petId']
 
 
 def test_get_definition_name_from_ref(swagger_parser):
