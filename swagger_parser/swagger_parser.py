@@ -442,6 +442,10 @@ class SwaggerParser(object):
                 # Get responses
                 self.paths[path][http_method]['responses'] = action['responses']
 
+                # Get mime types for this action
+                if 'consumes' in action.keys():
+                    self.paths[path][http_method]['consumes'] = action['consumes']
+
     def _add_parameters(self, parameter_map, parameter_list):
         """Populates the given parameter map with the list of parameters provided, resolving any reference objects encountered.
 
