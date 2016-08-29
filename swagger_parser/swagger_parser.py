@@ -343,25 +343,25 @@ class SwaggerParser(object):
         Returns:
             True if the given dict match the definition, False otherwise.
         """
-        if definition_name in self.specification['definitions'].keys():
-            # Check all required in dict_to_test
-            spec_def_name = self.specification['definitions'][definition_name]
-            all_required_keys_present = all(req in dict_to_test.keys()
-                                            for req in getattr(spec_def_name, 'required', {}))
-            if 'required' in spec_def_name and not all_required_keys_present:
-                return False
-
-            # Check no extra arg & type
-            properties_dict = self.specification['definitions'][definition_name]['properties']
-            for key, value in dict_to_test.items():
-                if value is not None:
-                    if key not in properties_dict:  # Extra arg
-                        return False
-                    else:  # Check type
-                        if not self._validate_type(properties_dict[key], value):
-                            return False
-        else:  # Unknow definition
+        if definition_name not in self.specification['definitions'].keys():
+            # reject unknown definition
             return False
+
+        # Check all required in dict_to_test
+        spec_def = self.specification['definitions'][definition_name]
+        all_required_keys_present = all(req in dict_to_test.keys() for req in spec_def.get('required', {}))
+        if 'required' in spec_def and not all_required_keys_present:
+            return False
+
+        # Check no extra arg & type
+        properties_dict = self.specification['definitions'][definition_name]['properties']
+        for key, value in dict_to_test.items():
+            if value is not None:
+                if key not in properties_dict:  # Extra arg
+                    return False
+                else:  # Check type
+                    if not self._validate_type(properties_dict[key], value):
+                        return False
 
         return True
 
