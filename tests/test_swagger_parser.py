@@ -150,13 +150,54 @@ def test_get_path_spec(swagger_parser):
 
 
 def test_validate_request(swagger_parser, pet_definition_example):
-    assert not swagger_parser.validate_request('error', 'get')
-    assert not swagger_parser.validate_request('/v2/pets', 'error')
-    assert not swagger_parser.validate_request('/v2/pets', 'post', body={})
 
-    assert swagger_parser.validate_request('/v2/pets', 'post', body=pet_definition_example)
+    def _get_faulty_pet_definition_example():
+        faulty_pet_definition_example = deepcopy(pet_definition_example)
+        # add item to sublevel dict
+        faulty_pet_definition_example['category']['foo'] = 'bar'
+        # delete item from toplevel dict
+        del faulty_pet_definition_example['status']
+        # add item to toplevel dict
+        faulty_pet_definition_example['fooo'] = 'baar'
+        # change value to wrong type in toplevel dict
+        faulty_pet_definition_example['id'] = 'fourtytwo'
+        return faulty_pet_definition_example
 
+    # In the given schema.yaml, the expected mime type is "json".
+    # Since 'body' is not mandatory, we can send an empty json body {}, too.
+    # - '' will be rejected
+    # - None will be accepted
+    # - Any other string body will be transformed to json and then checked
+    # - {} will be accepted
+
+    # wrong endpoint
+    assert not swagger_parser.validate_request('/v2/foo', 'get')
+    # empty string body (no json format, but in our schema, json is expected)
+    assert not swagger_parser.validate_request('/v2/pets', 'post', body='')
+    # wrong http method
+    assert not swagger_parser.validate_request('/v2/pets', 'foo')
+    # bad body - json, but not according to our given schema
+    assert not swagger_parser.validate_request(
+        '/v2/pets',
+        'post',
+        body=_get_faulty_pet_definition_example(),
+    )
+    # bad query - tags should be a list of strings, not a string
     assert not swagger_parser.validate_request('/v2/pets/findByTags', 'get', query={'tags': 'string'})
+
+    # no body (post generally does not require a body, and in our schema, no
+    #          parameters in body are required)
+    # http://stackoverflow.com/questions/7323958/are-put-and-post-requests-required-expected-to-have-a-request-body
+    assert swagger_parser.validate_request('/v2/pets', 'post')
+    # empty body (in our schema, no parameters in body are required)
+    assert swagger_parser.validate_request('/v2/pets', 'post', body={})
+    # valid body
+    assert swagger_parser.validate_request(
+        '/v2/pets',
+        'post',
+        body=pet_definition_example,
+    )
+    # valid query
     assert swagger_parser.validate_request('/v2/pets/findByTags', 'get', query={'tags': ['string']})
 
 
