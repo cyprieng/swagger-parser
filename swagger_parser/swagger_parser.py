@@ -547,28 +547,28 @@ class SwaggerParser(object):
             return False
 
         if action not in path_spec.keys():  # reject unknown http method
-            logging.warn("this http method is unknown '%s'" % (action, ))
+            logging.warn("this http method is unknown '{0}'".format(action))
             return False
 
         action_spec = path_spec[action]
 
         # check general post body guidelines (body + mime type)
         if action == 'post':
-            is_ok, msg = self._validate_post_body(body, action_spec)
+            is_ok, msg = _validate_post_body(body, action_spec)
             if not is_ok:
-                logging.warn("the general post body did not validate due to '%s'" % (msg, ))
+                logging.warn("the general post body did not validate due to '{0}'".format(msg))
                 return False
 
         # If the body is empty and it validated so far, we can return here
         # unless there is something in the query parameters we need to check
-        body_is_empty = (body is None or body == '' or body == {})
+        body_is_empty = body in [None, {}, '']
         if body_is_empty and query is None:
             return True
 
         # Check body parameters
         is_ok, msg = self._validate_body_parameters(body, action_spec)
         if not is_ok:
-            logging.warn("the parameters in the body did not validate due to '%s'" % (msg, ))
+            logging.warn("the parameters in the body did not validate due to '{0}'".format(msg))
             return False
 
         # Check query parameters
@@ -576,55 +576,6 @@ class SwaggerParser(object):
             return False
 
         return True
-
-    def _validate_post_body(self, actual_request_body, body_specification):
-        """ returns a tuple (boolean, msg)
-            to indicate whether the validation passed
-            if False then msg contains the reason
-            if True then msg is empty
-        """
-
-        # Are there required parameters? - there is only ONE body, so we check that one
-        parameters_required = body_specification['parameters']['body']['required']
-
-        # What if it says 'required' but there is no schema ? - we reject it
-        schema_present = body_specification['parameters']['body'].get('schema', None)
-        if parameters_required and not schema_present:
-            msg = "there is no schema given, but it says there are required parameters"
-            return False, msg
-
-        # What is the mime type ?
-        text_is_accepted = any('text' in item for item in body_specification.get('consumes', []))
-        json_is_accepted = any('json' in item for item in body_specification.get('consumes', []))
-
-        if actual_request_body is '' and not text_is_accepted:
-            msg = "post body is an empty string, but text is not an accepted mime type"
-            return False, msg
-
-        if actual_request_body == {} and not json_is_accepted:
-            msg = "post body is an empty dict, but json is not an accepted mime type"
-            return False, msg
-
-        # If only json is accepted, but the body is a string, we transform the
-        # string to json and check it then (not sure if the server would accept
-        # that string, though)
-        if (json_is_accepted and not
-                text_is_accepted and
-                type(actual_request_body).__name__ == 'str'):
-            actual_request_body = json.loads(actual_request_body)
-
-        # Handle empty body
-        body_is_empty = (actual_request_body is None or
-                         actual_request_body == '' or
-                         actual_request_body == {})
-        if body_is_empty:
-            if parameters_required:
-                msg = "there is no body, but it says there are required parameters"
-                return False, msg
-            else:
-                return True, ""
-
-        return True, ""
 
     def _validate_query_parameters(self, query, action_spec):
         """Check the query parameter for the action specification.
@@ -678,7 +629,7 @@ class SwaggerParser(object):
 
                 # Check type
                 if 'type' in param_spec.keys() and not self.check_type(body, param_spec['type']):
-                    msg = "Check type did not validate for %s and %s" % (param_spec['type'], body)
+                    msg = "Check type did not validate for {0} and {1}".format(param_spec['type'], body)
                     return False, msg
                 # Check schema
                 elif 'schema' in param_spec.keys():
@@ -691,7 +642,7 @@ class SwaggerParser(object):
                     elif ('type' in param_spec['schema'].keys() and not
                           self.check_type(body, param_spec['schema']['type'])):
                         # Type but not array
-                        msg = "Check type did not validate for %s and %s" % (param_spec['schema']['type'], body)
+                        msg = "Check type did not validate for {0} and {1}".format(param_spec['schema']['type'], body)
                         return False, msg
                     else:
                         definition_name = self.get_definition_name_from_ref(param_spec['schema']['$ref'])
@@ -784,3 +735,51 @@ class SwaggerParser(object):
                                 # Get value from definition
                                 definition_name = self.get_definition_name_from_ref(spec['schema']['$ref'])
                                 return self.definitions_example[definition_name]
+
+
+def _validate_post_body(actual_request_body, body_specification):
+    """ returns a tuple (boolean, msg)
+        to indicate whether the validation passed
+        if False then msg contains the reason
+        if True then msg is empty
+    """
+
+    # Are there required parameters? - there is only ONE body, so we check that one
+    parameters_required = body_specification['parameters']['body']['required']
+
+    # What if it says 'required' but there is no schema ? - we reject it
+    schema_present = body_specification['parameters']['body'].get('schema')
+    if parameters_required and not schema_present:
+        msg = "there is no schema given, but it says there are required parameters"
+        return False, msg
+
+    # What is the mime type ?
+    text_is_accepted = any('text' in item for item in body_specification.get('consumes', []))
+    json_is_accepted = any('json' in item for item in body_specification.get('consumes', []))
+
+    if actual_request_body is '' and not text_is_accepted:
+        msg = "post body is an empty string, but text is not an accepted mime type"
+        return False, msg
+
+    if actual_request_body == {} and not json_is_accepted:
+        msg = "post body is an empty dict, but json is not an accepted mime type"
+        return False, msg
+
+    # If only json is accepted, but the body is a string, we transform the
+    # string to json and check it then (not sure if the server would accept
+    # that string, though)
+    if (json_is_accepted and not
+            text_is_accepted and
+            type(actual_request_body).__name__ == 'str'):
+        actual_request_body = json.loads(actual_request_body)
+
+    # Handle empty body
+    body_is_empty = actual_request_body in [None, '', {}]
+    if body_is_empty:
+        if parameters_required:
+            msg = "there is no body, but it says there are required parameters"
+            return False, msg
+        else:
+            return True, ""
+
+    return True, ""
