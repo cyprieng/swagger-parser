@@ -2,8 +2,10 @@
 
 import codecs
 import datetime
+import hashlib
 import jinja2
 import json
+import logging
 import re
 import six
 import yaml
@@ -100,7 +102,7 @@ class SwaggerParser(object):
 
         if def_spec.get('type') == 'array' and 'items' in def_spec:
             item = self.get_example_from_prop_spec(def_spec['items'])
-            self.definitions_example[def_name] = [ item ]
+            self.definitions_example[def_name] = [item]
             return True
 
         if 'properties' not in def_spec:
@@ -140,7 +142,10 @@ class SwaggerParser(object):
         elif type_def == 'string':
             return isinstance(value, (six.text_type, six.string_types, datetime.datetime))
         elif type_def == 'boolean':
-            return isinstance(value, bool) or (isinstance(value, (six.text_type, six.string_types,)) and value.lower() in ['true', 'false'])
+            return (isinstance(value, bool) or
+                    (isinstance(value, (six.text_type, six.string_types,)) and
+                     value.lower() in ['true', 'false'])
+                    )
         else:
             return False
 
@@ -163,8 +168,8 @@ class SwaggerParser(object):
             return self._example_from_definition(prop_spec)
         elif 'type' not in prop_spec:  # Complex type
             return self._example_from_complex_def(prop_spec)
-        elif prop_spec['type'] == 'object': # From properties, without references
-          return [self._get_example_from_properties(prop_spec)]
+        elif prop_spec['type'] == 'object':  # From properties, without references
+            return [self._get_example_from_properties(prop_spec)]
         elif prop_spec['type'] == 'array':  # Array
             return self._example_from_array_spec(prop_spec)
         elif prop_spec['type'] == 'file':  # File
@@ -201,7 +206,6 @@ class SwaggerParser(object):
 
             example[inner_name] = partial
         return example
-
 
     @staticmethod
     def _get_example_from_basic_type(type):
@@ -240,7 +244,7 @@ class SwaggerParser(object):
             example_dict = self.definitions_example[definition_name]
             if not isinstance(example_dict, dict):
                 return example_dict
-            example = dict((example_name, example_value) for example_name, example_value in example_dict.items() )
+            example = dict((example_name, example_value) for example_name, example_value in example_dict.items())
             return example
 
     def _example_from_complex_def(self, prop_spec):
@@ -285,7 +289,8 @@ class SwaggerParser(object):
                 return self._get_example_from_basic_type(prop_spec['items']['type'])
 
         # Array with definition
-        elif '$ref' in prop_spec['items'].keys() or ('schema' in prop_spec and'$ref' in prop_spec['schema']['items'].keys()):
+        elif ('$ref' in prop_spec['items'].keys() or
+              ('schema' in prop_spec and'$ref' in prop_spec['schema']['items'].keys())):
             # Get value from definition
             definition_name = self.get_definition_name_from_ref(prop_spec['items']['$ref']) or \
                 self.get_definition_name_from_ref(prop_spec['schema']['items']['$ref'])
@@ -304,7 +309,7 @@ class SwaggerParser(object):
                 example = self.get_example_from_prop_spec(prop_spec)
                 if example is not None:
                     prop_example[prop_name] = example
-            return [ prop_example ]
+            return [prop_example]
 
     def get_dict_definition(self, dict, get_list=False):
         """Get the definition name of the given dict.
@@ -339,23 +344,25 @@ class SwaggerParser(object):
         Returns:
             True if the given dict match the definition, False otherwise.
         """
-        if definition_name in self.specification['definitions'].keys():
-            # Check all required in dict_to_test
-            if 'required' in self.specification['definitions'][definition_name] and \
-               not all(req in dict_to_test.keys() for req in self.specification['definitions'][definition_name]['required']):
-                    return False
-
-            # Check no extra arg & type
-            properties_dict = self.specification['definitions'][definition_name]['properties']
-            for key, value in dict_to_test.items():
-                if value is not None:
-                    if key not in properties_dict:  # Extra arg
-                        return False
-                    else:  # Check type
-                        if not self._validate_type(properties_dict[key], value):
-                            return False
-        else:  # Unknow definition
+        if definition_name not in self.specification['definitions'].keys():
+            # reject unknown definition
             return False
+
+        # Check all required in dict_to_test
+        spec_def = self.specification['definitions'][definition_name]
+        all_required_keys_present = all(req in dict_to_test.keys() for req in spec_def.get('required', {}))
+        if 'required' in spec_def and not all_required_keys_present:
+            return False
+
+        # Check no extra arg & type
+        properties_dict = self.specification['definitions'][definition_name]['properties']
+        for key, value in dict_to_test.items():
+            if value is not None:
+                if key not in properties_dict:  # Extra arg
+                    return False
+                else:  # Check type
+                    if not self._validate_type(properties_dict[key], value):
+                        return False
 
         return True
 
@@ -409,32 +416,36 @@ class SwaggerParser(object):
             if 'parameters' in path_spec:
                 self._add_parameters(default_parameters, path_spec['parameters'])
 
-            for action in path_spec.keys():
-                if action not in self._HTTP_VERBS:
+            for http_method in path_spec.keys():
+                if http_method not in self._HTTP_VERBS:
                     continue
 
-                self.paths[path][action] = {}
+                self.paths[path][http_method] = {}
 
                 # Add to operation list
-                tag = path_spec[action]['tags'][0] if 'tags' in path_spec[action].keys() and path_spec[action]['tags'] else None
-                if 'operationId' in path_spec[action].keys():
-                    self.operation[path_spec[action]['operationId']] = (path, action, tag)
+                action = path_spec[http_method]
+                tag = action['tags'][0] if 'tags' in action.keys() and action['tags'] else None
+                if 'operationId' in action.keys():
+                    self.operation[action['operationId']] = (path, http_method, tag)
                 else:
                     # Note: the encoding chosen below isn't very important in this
                     #       case; what matters is a byte string that is unique.
-                    #       URL paths and actions should encode to UTF-8 safely.
-                    import hashlib
+                    #       URL paths and http methods should encode to UTF-8 safely.
                     h = hashlib.sha256()
-                    h.update(("%s|%s" % (action, path)).encode('utf-8'))
-                    self.generated_operation[h.hexdigest()] = (path, action, tag)
+                    h.update(("{0}|{1}".format(http_method, path)).encode('utf-8'))
+                    self.generated_operation[h.hexdigest()] = (path, http_method, tag)
 
                 # Get parameters
-                self.paths[path][action]['parameters'] = default_parameters.copy()
-                if 'parameters' in path_spec[action].keys():
-                    self._add_parameters(self.paths[path][action]['parameters'], path_spec[action]['parameters'])
+                self.paths[path][http_method]['parameters'] = default_parameters.copy()
+                if 'parameters' in action.keys():
+                    self._add_parameters(self.paths[path][http_method]['parameters'], action['parameters'])
 
                 # Get responses
-                self.paths[path][action]['responses'] = path_spec[action]['responses']
+                self.paths[path][http_method]['responses'] = action['responses']
+
+                # Get mime types for this action
+                if 'consumes' in action.keys():
+                    self.paths[path][http_method]['consumes'] = action['consumes']
 
     def _add_parameters(self, parameter_map, parameter_list):
         """Populates the given parameter map with the list of parameters provided, resolving any reference objects encountered.
@@ -501,6 +512,19 @@ class SwaggerParser(object):
 
     def validate_request(self, path, action, body=None, query=None):
         """Check if the given request is valid.
+           Validates the body and the query
+
+           # Rules to validate the BODY:
+           # Let's limit this to mime types that either contain 'text' or 'json'
+           # 1. if body is None, there must not be any required parameters in
+           #    the given schema
+           # 2. if the mime type contains 'json', body must not be '', but can
+           #    be {}
+           # 3. if the mime type contains 'text', body can be any string
+           # 4. if no mime type ('consumes') is given.. DISALLOW
+           # 5. if the body is empty ('' or {}), there must not be any required parameters
+           # 6. if there is something in the body, it must adhere to the given schema
+           #    -> will call the validate body function
 
         Args:
             path: path of the request.
@@ -510,27 +534,50 @@ class SwaggerParser(object):
 
         Returns:
             True if the request is valid, False otherwise.
+
+        TODO:
+            - For every http method, we might want to have some general checks
+               before we go deeper into the parameters
+            - Check form data parameters
         """
         path_name, path_spec = self.get_path_spec(path)
 
-        if path_spec is not None:
-            if action in path_spec.keys():
-                action_spec = path_spec[action]
-                # Check query
-                if query is not None and not self._check_query_parameters(query, action_spec):
-                    return False
+        if path_spec is None:  # reject unknown path
+            logging.warn("there is no path")
+            return False
 
-                # Check body
-                if body is not None and not self._check_body_parameters(body, action_spec):
-                        return False
-            else:  # Undefined action
+        if action not in path_spec.keys():  # reject unknown http method
+            logging.warn("this http method is unknown '{0}'".format(action))
+            return False
+
+        action_spec = path_spec[action]
+
+        # check general post body guidelines (body + mime type)
+        if action == 'post':
+            is_ok, msg = _validate_post_body(body, action_spec)
+            if not is_ok:
+                logging.warn("the general post body did not validate due to '{0}'".format(msg))
                 return False
-        else:  # Unknow path
+
+        # If the body is empty and it validated so far, we can return here
+        # unless there is something in the query parameters we need to check
+        body_is_empty = body in [None, {}, '']
+        if body_is_empty and query is None:
+            return True
+
+        # Check body parameters
+        is_ok, msg = self._validate_body_parameters(body, action_spec)
+        if not is_ok:
+            logging.warn("the parameters in the body did not validate due to '{0}'".format(msg))
+            return False
+
+        # Check query parameters
+        if query is not None and not self._validate_query_parameters(query, action_spec):
             return False
 
         return True
 
-    def _check_query_parameters(self, query, action_spec):
+    def _validate_query_parameters(self, query, action_spec):
         """Check the query parameter for the action specification.
 
         Args:
@@ -563,7 +610,7 @@ class SwaggerParser(object):
             return False
         return True
 
-    def _check_body_parameters(self, body, action_spec):
+    def _validate_body_parameters(self, body, action_spec):
         """Check the body parameter for the action specification.
 
         Args:
@@ -572,6 +619,8 @@ class SwaggerParser(object):
 
         Returns:
             True if the body is valid.
+            A string containing an error msg in case the body did not validate,
+            otherwise the string is empty
         """
         processed_params = []
         for param_name, param_spec in action_spec['parameters'].items():
@@ -580,26 +629,33 @@ class SwaggerParser(object):
 
                 # Check type
                 if 'type' in param_spec.keys() and not self.check_type(body, param_spec['type']):
-                    return False
+                    msg = "Check type did not validate for {0} and {1}".format(param_spec['type'], body)
+                    return False, msg
                 # Check schema
                 elif 'schema' in param_spec.keys():
                     if 'type' in param_spec['schema'].keys() and param_spec['schema']['type'] == 'array':
                         # It is an array get value from definition
                         definition_name = self.get_definition_name_from_ref(param_spec['schema']['items']['$ref'])
                         if len(body) > 0 and not self.validate_definition(definition_name, body[0]):
-                            return False
-                    elif 'type' in param_spec['schema'].keys() and not self.check_type(body, param_spec['schema']['type']):
+                            msg = "The body did not validate against its definition"
+                            return False, msg
+                    elif ('type' in param_spec['schema'].keys() and not
+                          self.check_type(body, param_spec['schema']['type'])):
                         # Type but not array
-                        return False
+                        msg = "Check type did not validate for {0} and {1}".format(param_spec['schema']['type'], body)
+                        return False, msg
                     else:
                         definition_name = self.get_definition_name_from_ref(param_spec['schema']['$ref'])
                         if not self.validate_definition(definition_name, body):
-                            return False
+                            msg = "The body did not validate against its definition"
+                            return False, msg
         # Check required
         if not all(param in processed_params for param, spec in action_spec['parameters'].items()
                    if spec['in'] == 'body' and 'required' in spec and spec['required']):
-            return False
-        return True
+            msg = "Not all required parameters were present"
+            return False, msg
+
+        return True, ""
 
     def get_response_example(self, resp_spec):
         """Get a response example from a response spec.
@@ -679,3 +735,51 @@ class SwaggerParser(object):
                                 # Get value from definition
                                 definition_name = self.get_definition_name_from_ref(spec['schema']['$ref'])
                                 return self.definitions_example[definition_name]
+
+
+def _validate_post_body(actual_request_body, body_specification):
+    """ returns a tuple (boolean, msg)
+        to indicate whether the validation passed
+        if False then msg contains the reason
+        if True then msg is empty
+    """
+
+    # Are there required parameters? - there is only ONE body, so we check that one
+    parameters_required = body_specification['parameters']['body']['required']
+
+    # What if it says 'required' but there is no schema ? - we reject it
+    schema_present = body_specification['parameters']['body'].get('schema')
+    if parameters_required and not schema_present:
+        msg = "there is no schema given, but it says there are required parameters"
+        return False, msg
+
+    # What is the mime type ?
+    text_is_accepted = any('text' in item for item in body_specification.get('consumes', []))
+    json_is_accepted = any('json' in item for item in body_specification.get('consumes', []))
+
+    if actual_request_body is '' and not text_is_accepted:
+        msg = "post body is an empty string, but text is not an accepted mime type"
+        return False, msg
+
+    if actual_request_body == {} and not json_is_accepted:
+        msg = "post body is an empty dict, but json is not an accepted mime type"
+        return False, msg
+
+    # If only json is accepted, but the body is a string, we transform the
+    # string to json and check it then (not sure if the server would accept
+    # that string, though)
+    if (json_is_accepted and not
+            text_is_accepted and
+            type(actual_request_body).__name__ == 'str'):
+        actual_request_body = json.loads(actual_request_body)
+
+    # Handle empty body
+    body_is_empty = actual_request_body in [None, '', {}]
+    if body_is_empty:
+        if parameters_required:
+            msg = "there is no body, but it says there are required parameters"
+            return False, msg
+        else:
+            return True, ""
+
+    return True, ""

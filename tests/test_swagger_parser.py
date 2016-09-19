@@ -1,5 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding:utf-8 -*-
+
+from copy import deepcopy
 
 
 def test_inline_examples(inline_parser, inline_example):
@@ -88,9 +89,9 @@ def test_get_example_from_prop_spec(swagger_parser):
         'error': {
           'type': 'object',
           'properties': {
-            'code': { 'type': 'string' },
-            'title': { 'type': 'string' },
-            'detail': { 'type': 'string' },
+            'code': {'type': 'string'},
+            'title': {'type': 'string'},
+            'detail': {'type': 'string'},
           },
           'required': ['code', 'title', 'detail'],
         },
@@ -99,6 +100,7 @@ def test_get_example_from_prop_spec(swagger_parser):
     }
     example = swagger_parser.get_example_from_prop_spec(prop_spec)
     assert example == [{'error': {'code': 'string', 'detail': 'string', 'title': 'string'}}]
+
 
 def test_get_dict_definition(swagger_parser, pet_definition_example):
     assert swagger_parser.get_dict_definition(pet_definition_example) == 'Pet'
@@ -124,26 +126,15 @@ def test_validate_definition(swagger_parser, pet_definition_example):
     assert not swagger_parser.validate_definition('Pet', pet_definition_example)
 
 
-def test_get_paths_data(swagger_parser, path_data_example):
+def test_get_paths_data(swagger_parser, post_put_path_data, get_path_data):
     swagger_parser.get_paths_data()
     assert len(swagger_parser.paths) == 12
-    assert swagger_parser.paths['/v2/pets'] == path_data_example
-    pet_id_param = {
-        'name': 'petId',
-        'in': 'path',
-        'pattern': '^[a-zA-Z0-9-]+$',
-        'required': True,
-        'type': 'string',
-        'description': "Pet's Unique identifier",
-    }
-    assert swagger_parser.paths['/v2/pets/{petId}']['get'] == \
-        {'responses': {'200': {'description': u'successful µ-øperätioñ',
-                               'schema': {'x-scope': [''], '$ref': '#/definitions/Pet'}},
-                       '404': {'description': 'Pet not found'},
-                       '400': {'description': 'Invalid ID supplied'}},
-         'parameters': {'petId': pet_id_param}}
-    assert swagger_parser.paths['/v2/pets/{petId}']['post']['parameters']['petId'] == pet_id_param
-    assert swagger_parser.paths['/v2/pets/{petId}']['delete']['parameters']['petId'] == pet_id_param
+    assert swagger_parser.paths['/v2/pets'] == post_put_path_data
+    assert swagger_parser.paths['/v2/pets/{petId}']['get'] == get_path_data
+    post_pet_id = swagger_parser.paths['/v2/pets/{petId}']['post']['parameters']['petId']
+    delete_pet_id = swagger_parser.paths['/v2/pets/{petId}']['delete']['parameters']['petId']
+    assert post_pet_id == get_path_data['parameters']['petId']
+    assert delete_pet_id == get_path_data['parameters']['petId']
 
 
 def test_get_definition_name_from_ref(swagger_parser):
@@ -159,13 +150,54 @@ def test_get_path_spec(swagger_parser):
 
 
 def test_validate_request(swagger_parser, pet_definition_example):
-    assert not swagger_parser.validate_request('error', 'get')
-    assert not swagger_parser.validate_request('/v2/pets', 'error')
-    assert not swagger_parser.validate_request('/v2/pets', 'post', body={})
 
-    assert swagger_parser.validate_request('/v2/pets', 'post', body=pet_definition_example)
+    def _get_faulty_pet_definition_example():
+        faulty_pet_definition_example = deepcopy(pet_definition_example)
+        # add item to sublevel dict
+        faulty_pet_definition_example['category']['foo'] = 'bar'
+        # delete item from toplevel dict
+        del faulty_pet_definition_example['status']
+        # add item to toplevel dict
+        faulty_pet_definition_example['fooo'] = 'baar'
+        # change value to wrong type in toplevel dict
+        faulty_pet_definition_example['id'] = 'fourtytwo'
+        return faulty_pet_definition_example
 
+    # In the given schema.yaml, the expected mime type is "json".
+    # Since 'body' is not mandatory, we can send an empty json body {}, too.
+    # - '' will be rejected
+    # - None will be accepted
+    # - Any other string body will be transformed to json and then checked
+    # - {} will be accepted
+
+    # wrong endpoint
+    assert not swagger_parser.validate_request('/v2/foo', 'get')
+    # empty string body (no json format, but in our schema, json is expected)
+    assert not swagger_parser.validate_request('/v2/pets', 'post', body='')
+    # wrong http method
+    assert not swagger_parser.validate_request('/v2/pets', 'foo')
+    # bad body - json, but not according to our given schema
+    assert not swagger_parser.validate_request(
+        '/v2/pets',
+        'post',
+        body=_get_faulty_pet_definition_example(),
+    )
+    # bad query - tags should be a list of strings, not a string
     assert not swagger_parser.validate_request('/v2/pets/findByTags', 'get', query={'tags': 'string'})
+
+    # no body (post generally does not require a body, and in our schema, no
+    #          parameters in body are required)
+    # http://stackoverflow.com/questions/7323958/are-put-and-post-requests-required-expected-to-have-a-request-body
+    assert swagger_parser.validate_request('/v2/pets', 'post')
+    # empty body (in our schema, no parameters in body are required)
+    assert swagger_parser.validate_request('/v2/pets', 'post', body={})
+    # valid body
+    assert swagger_parser.validate_request(
+        '/v2/pets',
+        'post',
+        body=pet_definition_example,
+    )
+    # valid query
     assert swagger_parser.validate_request('/v2/pets/findByTags', 'get', query={'tags': ['string']})
 
 
@@ -179,6 +211,7 @@ def test_get_send_request_correct_body(swagger_parser, pet_definition_example):
     assert swagger_parser.get_send_request_correct_body('/v2/pets', 'post') == pet_definition_example
     assert swagger_parser.get_send_request_correct_body('/v2/pets/findByStatus', 'get') is None
     assert swagger_parser.get_send_request_correct_body('/v2/users/username', 'put') == 'string'
+
 
 def test_array_definitions(swagger_array_parser):
     swagger_array_parser.build_definitions_example()
