@@ -160,6 +160,8 @@ class SwaggerParser(object):
         """
         if 'example' in prop_spec.keys() and self.use_example:  # From example
             return prop_spec['example']
+        if 'x-example' in prop_spec.keys() and self.use_example:
+            return prop_spec['x-example']
         elif 'default' in prop_spec.keys():  # From default
             return prop_spec['default']
         elif 'enum' in prop_spec.keys():  # From enum
