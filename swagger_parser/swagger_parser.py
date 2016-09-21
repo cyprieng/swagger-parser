@@ -30,8 +30,7 @@ class SwaggerParser(object):
         paths: dict of path with their actions, parameters, and responses.
     """
 
-    _HTTP_VERBS = set(['get', 'put', 'post', 'delete', 'options', 'head',
-                       'patch'])
+    _HTTP_VERBS = set(['get', 'put', 'post', 'delete', 'options', 'head', 'patch'])
 
     def __init__(self, swagger_path=None, swagger_dict=None, use_example=True):
         """Run parsing from either a file or a dict.
@@ -112,10 +111,9 @@ class SwaggerParser(object):
         # Get properties example value
         for prop_name, prop_spec in def_spec['properties'].items():
             example = self.get_example_from_prop_spec(prop_spec)
-            if example is not None:
-                self.definitions_example[def_name][prop_name] = example
-            else:
+            if example is None:
                 return False
+            self.definitions_example[def_name][prop_name] = example
 
         return True
 
@@ -158,29 +156,42 @@ class SwaggerParser(object):
         Returns:
             An example value
         """
-        if 'example' in prop_spec.keys() and self.use_example:  # From example
-            return prop_spec['example']
-        elif 'default' in prop_spec.keys():  # From default
-            return prop_spec['default']
-        elif 'enum' in prop_spec.keys():  # From enum
+        # Read example directly from (X-)Example or Default value
+        easy_keys = ['example', 'x-example', 'default']
+        for key in easy_keys:
+            if key in prop_spec.keys() and self.use_example:
+                return prop_spec[key]
+        # Enum
+        if 'enum' in prop_spec.keys():
             return prop_spec['enum'][0]
-        elif '$ref' in prop_spec.keys():  # From definition
+        # From definition
+        if '$ref' in prop_spec.keys():
             return self._example_from_definition(prop_spec)
-        elif 'type' not in prop_spec:  # Complex type
+        # Complex type
+        if 'type' not in prop_spec:
             return self._example_from_complex_def(prop_spec)
-        elif prop_spec['type'] == 'object':  # From properties, without references
-            return [self._get_example_from_properties(prop_spec)]
-        elif prop_spec['type'] == 'array':  # Array
+        # Object - read from properties, without references
+        if prop_spec['type'] == 'object':
+            example, additional_properties = self._get_example_from_properties(prop_spec)
+            if additional_properties:
+                return example
+            return [example]
+        # Array
+        if prop_spec['type'] == 'array':
             return self._example_from_array_spec(prop_spec)
-        elif prop_spec['type'] == 'file':  # File
+        # File
+        if prop_spec['type'] == 'file':
             return (StringIO('my file contents'), 'hello world.txt')
-        else:  # Basic types
-            if 'format' in prop_spec.keys() and prop_spec['format'] == 'date-time':
-                return self._get_example_from_basic_type('datetime')[0]
-            elif isinstance(prop_spec['type'], list):  # Type is a list
-                return self._get_example_from_basic_type(prop_spec['type'][0])[0]
-            else:
-                return self._get_example_from_basic_type(prop_spec['type'])[0]
+        # Date time
+        if 'format' in prop_spec.keys() and prop_spec['format'] == 'date-time':
+            return self._get_example_from_basic_type('datetime')[0]
+        # List
+        if isinstance(prop_spec['type'], list):
+            return self._get_example_from_basic_type(prop_spec['type'][0])[0]
+
+        # Default - basic type
+        logging.info("falling back to basic type, no other match found")
+        return self._get_example_from_basic_type(prop_spec['type'])[0]
 
     def _get_example_from_properties(self, spec):
         """Get example from the properties of an object defined inline.
@@ -326,10 +337,9 @@ class SwaggerParser(object):
         list_def_candidate = []
         for definition_name in self.specification['definitions'].keys():
             if self.validate_definition(definition_name, dict):
-                if get_list:
-                    list_def_candidate.append(definition_name)
-                else:
+                if not get_list:
                     return definition_name
+                list_def_candidate.append(definition_name)
         if get_list:
             return list_def_candidate
         return None
