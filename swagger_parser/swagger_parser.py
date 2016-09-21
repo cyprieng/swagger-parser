@@ -10,6 +10,8 @@ import re
 import six
 import yaml
 
+from copy import deepcopy
+
 try:
     from StringIO import StringIO
 except ImportError:  # Python 3
@@ -200,23 +202,39 @@ class SwaggerParser(object):
             prop_spec: property specification you want an example of.
 
         Returns:
-            An example.
+            An example for the given spec
+            A boolean, whether we had additionalProperties in the spec, or not
         """
+        local_spec = deepcopy(spec)
+
+        # Handle additionalProperties if they exist
+        # we replace additionalProperties with two concrete
+        # properties so that examples can be generated
+        additional_property = False
+        if 'additionalProperties' in local_spec:
+            additional_property = True
+            local_spec['properties'] = {
+                'any_prop1': local_spec['additionalProperties'],
+                'any_prop2': local_spec['additionalProperties'],
+            }
+            del(local_spec['additionalProperties'])
+
         example = {}
-        required = spec.get('required', spec['properties'].keys())
-        for inner_name, inner_spec in spec['properties'].items():
+        properties = local_spec.get('properties')
+        required = local_spec.get('required', properties.keys())
+
+        for inner_name, inner_spec in properties.items():
             if inner_name not in required:
                 continue
-
             partial = self.get_example_from_prop_spec(inner_spec)
             # While get_example_from_prop_spec is supposed to return a list,
             # we don't actually want that when recursing to build from
             # properties
             if isinstance(partial, list):
                 partial = partial[0]
-
             example[inner_name] = partial
-        return example
+
+        return example, additional_property
 
     @staticmethod
     def _get_example_from_basic_type(type):
@@ -343,6 +361,18 @@ class SwaggerParser(object):
         if get_list:
             return list_def_candidate
         return None
+
+    def validate_additional_properties(self, valid_response, response):
+        # the type of the value of the first key/value in valid_response is our
+        # expected type
+        expected_type = type(valid_response[valid_response.keys()[0]])
+        # all values must be of that type in both valid and actual response
+        try:
+            assert all([type(y) == expected_type for _, y in response.items()])
+            assert all([type(y) == expected_type for _, y in valid_response.items()])
+            return True
+        except:
+            return False
 
     def validate_definition(self, definition_name, dict_to_test):
         """Validate the given dict according to the given definition.
