@@ -259,6 +259,18 @@ class SwaggerParser(object):
 
     @staticmethod
     def _definition_from_example(example):
+        """Generates a swagger definition json from a given example
+           Works only for simple types in the dict
+
+        Args:
+            example: The example for which we want a definition
+                     Type is DICT
+
+        Returns:
+            A dict that is the swagger definition json
+        """
+        assert isinstance(example, dict)
+
         def _has_simple_type(value):
             accepted = [str, int, float, bool]
             return any(isinstance(value, x) for x in accepted)
@@ -269,7 +281,7 @@ class SwaggerParser(object):
         }
         for key, value in example.items():
             if not _has_simple_type(value):
-                raise Exception("not implemented yet")
+                raise Exception("Not implemented yet")
             ret_value = None
             if isinstance(value, str):
                 ret_value = {'type': 'string'}
@@ -279,6 +291,8 @@ class SwaggerParser(object):
                 ret_value = {'type': 'number', 'format': 'double'}
             elif isinstance(value, bool):
                 ret_value = {'type': 'boolean'}
+            else:
+                raise Exception("Not implemented yet")
             definition['properties'][key] = ret_value
 
         return definition
@@ -388,10 +402,23 @@ class SwaggerParser(object):
             return list_def_candidate
         return None
 
-    """ both valid_response and response are DICTS where the keys don't matter
-        but the value types must match for each (key, value) pair
-    """
     def validate_additional_properties(self, valid_response, response):
+        """Validates additional properties. In additional properties, we only
+           need to compare the values of the dict, not the keys
+
+        Args:
+            valid_response: An example response (for example generated in
+                            _get_example_from_properties(self, spec))
+                            Type is DICT
+            response: The actual dict coming from the response
+                      Type is DICT
+
+        Returns:
+            A boolean - whether the actual response validates against the given example
+        """
+        assert isinstance(valid_response, dict)
+        assert isinstance(response, dict)
+
         # the type of the value of the first key/value in valid_response is our
         # expected type - if it is a dict or list, we must go deeper
         first_value = valid_response[list(valid_response)[0]]
@@ -413,7 +440,7 @@ class SwaggerParser(object):
 
         # TODO: list
         if isinstance(first_value, list):
-            raise Exception("not implemented yet")
+            raise Exception("Not implemented yet")
 
         # simple types
         # all values must be of that type in both valid and actual response
