@@ -362,14 +362,15 @@ class SwaggerParser(object):
             return list_def_candidate
         return None
 
-    def validate_additional_properties(self, valid_response, response):
+    @staticmethod
+    def validate_additional_properties(valid_response, response):
         # the type of the value of the first key/value in valid_response is our
         # expected type
         expected_type = type(valid_response[valid_response.keys()[0]])
         # all values must be of that type in both valid and actual response
         try:
-            assert all([type(y) == expected_type for _, y in response.items()])
-            assert all([type(y) == expected_type for _, y in valid_response.items()])
+            assert all(type(y) == expected_type for _, y in response.items())
+            assert all(type(y) == expected_type for _, y in valid_response.items())
             return True
         except:
             return False
