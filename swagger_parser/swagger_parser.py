@@ -257,6 +257,32 @@ class SwaggerParser(object):
         elif type == 'boolean':
             return [False, True]
 
+    @staticmethod
+    def _definition_from_example(example):
+        def _has_simple_type(value):
+            accepted = [str, int, float, bool]
+            return any(isinstance(value, x) for x in accepted)
+
+        definition = {
+            'type': 'object',
+            'properties': {},
+        }
+        for key, value in example.items():
+            if not _has_simple_type(value):
+                raise Exception("not implemented yet")
+            ret_value = None
+            if isinstance(value, str):
+                ret_value = {'type': 'string'}
+            elif isinstance(value, int):
+                ret_value = {'type': 'integer', 'format': 'int64'}
+            elif isinstance(value, float):
+                ret_value = {'type': 'number', 'format': 'double'}
+            elif isinstance(value, bool):
+                ret_value = {'type': 'boolean'}
+            definition['properties'][key] = ret_value
+
+        return definition
+
     def _example_from_definition(self, prop_spec):
         """Get an example from a property specification linked to a definition.
 
@@ -362,20 +388,43 @@ class SwaggerParser(object):
             return list_def_candidate
         return None
 
-    @staticmethod
-    def validate_additional_properties(valid_response, response):
+    """ both valid_response and response are DICTS where the keys don't matter
+        but the value types must match for each (key, value) pair
+    """
+    def validate_additional_properties(self, valid_response, response):
         # the type of the value of the first key/value in valid_response is our
-        # expected type
-        expected_type = type(valid_response[valid_response.keys()[0]])
+        # expected type - if it is a dict or list, we must go deeper
+        first_value = valid_response[list(valid_response)[0]]
+
+        # dict
+        if isinstance(first_value, dict):
+            # try to find a definition for that first value
+            definition = None
+            definition_name = self.get_dict_definition(first_value)
+            if definition_name is None:
+                definition = self._definition_from_example(first_value)
+                definition_name = 'self generated'
+            for item in response.values():
+                if not self.validate_definition(definition_name,
+                                                item,
+                                                definition=definition):
+                    return False
+            return True
+
+        # TODO: list
+        if isinstance(first_value, list):
+            raise Exception("not implemented yet")
+
+        # simple types
         # all values must be of that type in both valid and actual response
         try:
-            assert all(type(y) == expected_type for _, y in response.items())
-            assert all(type(y) == expected_type for _, y in valid_response.items())
+            assert all(isinstance(y, type(first_value)) for _, y in response.items())
+            assert all(isinstance(y, type(first_value)) for _, y in valid_response.items())
             return True
         except:
             return False
 
-    def validate_definition(self, definition_name, dict_to_test):
+    def validate_definition(self, definition_name, dict_to_test, definition=None):
         """Validate the given dict according to the given definition.
 
         Args:
@@ -385,18 +434,19 @@ class SwaggerParser(object):
         Returns:
             True if the given dict match the definition, False otherwise.
         """
-        if definition_name not in self.specification['definitions'].keys():
+        if (definition_name not in self.specification['definitions'].keys() and
+                definition is None):
             # reject unknown definition
             return False
 
         # Check all required in dict_to_test
-        spec_def = self.specification['definitions'][definition_name]
+        spec_def = definition or self.specification['definitions'][definition_name]
         all_required_keys_present = all(req in dict_to_test.keys() for req in spec_def.get('required', {}))
         if 'required' in spec_def and not all_required_keys_present:
             return False
 
         # Check no extra arg & type
-        properties_dict = self.specification['definitions'][definition_name]['properties']
+        properties_dict = spec_def['properties']
         for key, value in dict_to_test.items():
             if value is not None:
                 if key not in properties_dict:  # Extra arg

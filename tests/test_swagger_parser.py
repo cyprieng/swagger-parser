@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from copy import deepcopy
+import pytest
 
 
 def test_inline_examples(inline_parser, inline_example):
@@ -225,3 +226,83 @@ def test_array_definitions(swagger_array_parser):
 
     assert isinstance(widgetArray, list)
     assert widgetArray[0] == widget
+
+
+def test_simple_additional_property_handling(swagger_parser):
+    # value of type = int
+    additional_properties_1 = {'any_prop2': 42, 'any_prop1': 42}
+    valid_response_1 = {'aa': 3, 'ssssssss': 1, 'Not available': 6, 'xyz': 1, 'yyy': 2}
+    bad_response_1 = {'a': 1, 'b': 222, 35: '23', 'c': False}
+    assert swagger_parser.validate_additional_properties(
+            additional_properties_1, valid_response_1)
+    assert not swagger_parser.validate_additional_properties(
+            additional_properties_1, bad_response_1)
+
+    # value of type = string
+    additional_properties_2 = {'any_prop2': 'hello', 'any_prop1': 'world'}
+    valid_response_2 = {'aa': '3', 'ssssssss': 'one', 'Not available': '6', 555: 'yes', 'yyy': '$$$'}
+    bad_response_2 = {'a': '1', 'b': 222, 35: '23', 'c': False}
+    assert swagger_parser.validate_additional_properties(additional_properties_2, valid_response_2)
+    assert not swagger_parser.validate_additional_properties(additional_properties_2, bad_response_2)
+
+
+def test_complex_additional_property_handling(swagger_parser):
+    # value of type = object/complex
+    additional_properties_3 = {
+        'any_prop2': {'word': 'hello', 'number': 1},
+        'any_prop1': {'word': 'world', 'number': 2},
+    }
+    valid_response_3 = {
+        'aa': {'word': 'hi', 'number': 3},
+        5555: {'word': 'one', 'number': 1},
+        'Not available': {'word': 'foo', 'number': 6},
+    }
+    bad_response_3 = {
+        'a': {'word': 1, 'number': '1'},
+        'b': {'word': 'bar', 'number': 222},
+        35: {'word': 'baz', 'number': '23', 'anotherone': 'gna'},
+        'c': {'word': 'True', 'number': False},
+    }
+    assert swagger_parser.validate_additional_properties(additional_properties_3, valid_response_3)
+    assert not swagger_parser.validate_additional_properties(additional_properties_3, bad_response_3)
+
+
+def test_referenced_additional_property_handling(swagger_parser):
+    # This example here should match 'Category' definition
+    additional_properties = {
+       'first_': {'id': 4, 'name': 'blub'},
+       'second': {'id': 5, 'name': 'blubblub'},
+    }
+    valid_response = {
+       'somekey_': {'id': 40, 'name': 'blub0'},
+       'otherkey': {'id': 50, 'name': 'blubblub0'},
+    }
+    bad_response = {
+       'somekey_': {'badkey': 40, 'name': 'blub0'},
+       'otherkey': {'id': 'bad_value', 'name': 'blubblub0'},
+       'thirdkey': {'id': 10, 'name': 'meandmyself', 'another': True},
+    }
+    assert swagger_parser.validate_additional_properties(additional_properties, valid_response)
+    assert not swagger_parser.validate_additional_properties(additional_properties, bad_response)
+
+
+@pytest.mark.skip
+def test_list_additional_property_handling(swagger_parser):
+    # TODO list handling in additionalProperties is not implemented yet
+    additional_properties_4 = {
+        'any_prop2': [{'word': 'hello', 'number': 1}, {'word': 'something', 'number': 3}],
+        'any_prop1': [{'word': 'world', 'number': 2}],
+    }
+    valid_response_4 = {
+        'aa': [{'word': 'hi', 'number': 3}, {'word': 'salut', 'number': 4}],
+        5555: [{'word': 'one', 'number': 1}],
+    }
+    bad_response_4 = {
+        'a': [{'word': 'x', 'number': 1}, {'word': 'y', 'number': 5}],
+        35: [{'word': 'baz', 'number': False}],
+        'c': 'a string',
+        'd': {'name': 'lala', 'number': 333},
+        'e': ['one', 2, True]
+    }
+    assert swagger_parser.validate_additional_properties(additional_properties_4, valid_response_4)
+    assert not swagger_parser.validate_additional_properties(additional_properties_4, bad_response_4)
