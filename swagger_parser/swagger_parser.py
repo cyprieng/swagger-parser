@@ -213,11 +213,16 @@ class SwaggerParser(object):
         additional_property = False
         if 'additionalProperties' in local_spec:
             additional_property = True
-            local_spec['properties'] = {
+            if 'properties' not in local_spec:
+                local_spec['properties'] = {}
+            local_spec['properties'].update({
                 'any_prop1': local_spec['additionalProperties'],
                 'any_prop2': local_spec['additionalProperties'],
-            }
+            })
             del(local_spec['additionalProperties'])
+            required = local_spec.get('required', [])
+            required += ['any_prop1', 'any_prop2']
+            local_spec['required'] = required
 
         example = {}
         properties = local_spec.get('properties')
