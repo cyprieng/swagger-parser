@@ -103,6 +103,80 @@ def test_get_example_from_prop_spec(swagger_parser):
     assert example == [{'error': {'code': 'string', 'detail': 'string', 'title': 'string'}}]
 
 
+def test_get_example_from_prop_spec_with_additional_properties(swagger_parser):
+    prop_spec = {
+      'type': 'object',
+      'properties': {
+        'error': {
+          'type': 'object',
+          'properties': {
+            'code': {'type': 'string'},
+            'title': {'type': 'string'},
+            'detail': {'type': 'string'},
+          },
+          'required': ['code', 'title', 'detail'],
+        },
+      },
+      'required': ['error'],
+    }
+
+    # additionalProperties - $ref (complex prop_spec with required keys)
+    prop_spec['additionalProperties'] = {'$ref': '#/definitions/Category'}
+    example = swagger_parser.get_example_from_prop_spec(prop_spec)
+    assert example == {
+        'any_prop2': {'id': 42, 'name': 'string'},
+        'any_prop1': {'id': 42, 'name': 'string'},
+        'error': {'code': 'string', 'detail': 'string', 'title': 'string'},
+    }
+
+    # additionalProperties - string (with complex prop_spec without required keys)
+    del prop_spec['required']
+    prop_spec['additionalProperties'] = {'type': 'string'}
+    example = swagger_parser.get_example_from_prop_spec(prop_spec)
+    assert example == {
+        'any_prop2': 'string',
+        'any_prop1': 'string',
+    }
+
+    # additionalProperties - integer (prop spec with only additional properties)
+    easy_prop_spec = {
+        'type': 'object',
+        'additionalProperties': {'type': 'integer', 'format': 'int64'},
+    }
+    example = swagger_parser.get_example_from_prop_spec(easy_prop_spec)
+    assert example == {'any_prop1': 42, 'any_prop2': 42}
+
+    # additionalProperties - dict not satisfying any definition
+    #  (with complex prop_spec without required keys)
+    prop_spec['additionalProperties'] = {
+        'type': 'object',
+        'properties': {
+            'food': {'type': 'string'},
+            'drink': {'type': 'number', 'format': 'double'},
+            'movies': {'type': 'boolean'},
+        }
+    }
+    example = swagger_parser.get_example_from_prop_spec(prop_spec)
+    assert example == {
+        'any_prop2': {'food': 'string', 'movies': False, 'drink': 5.5},
+        'any_prop1': {'food': 'string', 'movies': False, 'drink': 5.5},
+    }
+
+    # additionalProperties - dict satisfying the 'Category' definition
+    prop_spec['additionalProperties'] = {
+        'type': 'object',
+        'properties': {
+            'id': {'type': 'integer', 'format': 'int64'},
+            'name': {'type': 'string'},
+        }
+    }
+    example = swagger_parser.get_example_from_prop_spec(prop_spec)
+    assert example == {
+        'any_prop2': {'id': 42, 'name': 'string'},
+        'any_prop1': {'id': 42, 'name': 'string'},
+    }
+
+
 def test_get_dict_definition(swagger_parser, pet_definition_example):
     assert swagger_parser.get_dict_definition(pet_definition_example) == 'Pet'
     assert swagger_parser.get_dict_definition({'error': 'error'}) is None
