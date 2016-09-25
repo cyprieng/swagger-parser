@@ -10,6 +10,8 @@ import re
 import six
 import yaml
 
+from copy import deepcopy
+
 try:
     from StringIO import StringIO
 except ImportError:  # Python 3
@@ -30,8 +32,7 @@ class SwaggerParser(object):
         paths: dict of path with their actions, parameters, and responses.
     """
 
-    _HTTP_VERBS = set(['get', 'put', 'post', 'delete', 'options', 'head',
-                       'patch'])
+    _HTTP_VERBS = set(['get', 'put', 'post', 'delete', 'options', 'head', 'patch'])
 
     def __init__(self, swagger_path=None, swagger_dict=None, use_example=True):
         """Run parsing from either a file or a dict.
@@ -112,10 +113,9 @@ class SwaggerParser(object):
         # Get properties example value
         for prop_name, prop_spec in def_spec['properties'].items():
             example = self.get_example_from_prop_spec(prop_spec)
-            if example is not None:
-                self.definitions_example[def_name][prop_name] = example
-            else:
+            if example is None:
                 return False
+            self.definitions_example[def_name][prop_name] = example
 
         return True
 
@@ -158,29 +158,42 @@ class SwaggerParser(object):
         Returns:
             An example value
         """
-        if 'example' in prop_spec.keys() and self.use_example:  # From example
-            return prop_spec['example']
-        elif 'default' in prop_spec.keys():  # From default
-            return prop_spec['default']
-        elif 'enum' in prop_spec.keys():  # From enum
+        # Read example directly from (X-)Example or Default value
+        easy_keys = ['example', 'x-example', 'default']
+        for key in easy_keys:
+            if key in prop_spec.keys() and self.use_example:
+                return prop_spec[key]
+        # Enum
+        if 'enum' in prop_spec.keys():
             return prop_spec['enum'][0]
-        elif '$ref' in prop_spec.keys():  # From definition
+        # From definition
+        if '$ref' in prop_spec.keys():
             return self._example_from_definition(prop_spec)
-        elif 'type' not in prop_spec:  # Complex type
+        # Complex type
+        if 'type' not in prop_spec:
             return self._example_from_complex_def(prop_spec)
-        elif prop_spec['type'] == 'object':  # From properties, without references
-            return [self._get_example_from_properties(prop_spec)]
-        elif prop_spec['type'] == 'array':  # Array
+        # Object - read from properties, without references
+        if prop_spec['type'] == 'object':
+            example, additional_properties = self._get_example_from_properties(prop_spec)
+            if additional_properties:
+                return example
+            return [example]
+        # Array
+        if prop_spec['type'] == 'array':
             return self._example_from_array_spec(prop_spec)
-        elif prop_spec['type'] == 'file':  # File
+        # File
+        if prop_spec['type'] == 'file':
             return (StringIO('my file contents'), 'hello world.txt')
-        else:  # Basic types
-            if 'format' in prop_spec.keys() and prop_spec['format'] == 'date-time':
-                return self._get_example_from_basic_type('datetime')[0]
-            elif isinstance(prop_spec['type'], list):  # Type is a list
-                return self._get_example_from_basic_type(prop_spec['type'][0])[0]
-            else:
-                return self._get_example_from_basic_type(prop_spec['type'])[0]
+        # Date time
+        if 'format' in prop_spec.keys() and prop_spec['format'] == 'date-time':
+            return self._get_example_from_basic_type('datetime')[0]
+        # List
+        if isinstance(prop_spec['type'], list):
+            return self._get_example_from_basic_type(prop_spec['type'][0])[0]
+
+        # Default - basic type
+        logging.info("falling back to basic type, no other match found")
+        return self._get_example_from_basic_type(prop_spec['type'])[0]
 
     def _get_example_from_properties(self, spec):
         """Get example from the properties of an object defined inline.
@@ -189,23 +202,44 @@ class SwaggerParser(object):
             prop_spec: property specification you want an example of.
 
         Returns:
-            An example.
+            An example for the given spec
+            A boolean, whether we had additionalProperties in the spec, or not
         """
+        local_spec = deepcopy(spec)
+
+        # Handle additionalProperties if they exist
+        # we replace additionalProperties with two concrete
+        # properties so that examples can be generated
+        additional_property = False
+        if 'additionalProperties' in local_spec:
+            additional_property = True
+            if 'properties' not in local_spec:
+                local_spec['properties'] = {}
+            local_spec['properties'].update({
+                'any_prop1': local_spec['additionalProperties'],
+                'any_prop2': local_spec['additionalProperties'],
+            })
+            del(local_spec['additionalProperties'])
+            required = local_spec.get('required', [])
+            required += ['any_prop1', 'any_prop2']
+            local_spec['required'] = required
+
         example = {}
-        required = spec.get('required', spec['properties'].keys())
-        for inner_name, inner_spec in spec['properties'].items():
+        properties = local_spec.get('properties')
+        required = local_spec.get('required', properties.keys())
+
+        for inner_name, inner_spec in properties.items():
             if inner_name not in required:
                 continue
-
             partial = self.get_example_from_prop_spec(inner_spec)
             # While get_example_from_prop_spec is supposed to return a list,
             # we don't actually want that when recursing to build from
             # properties
             if isinstance(partial, list):
                 partial = partial[0]
-
             example[inner_name] = partial
-        return example
+
+        return example, additional_property
 
     @staticmethod
     def _get_example_from_basic_type(type):
@@ -227,6 +261,46 @@ class SwaggerParser(object):
             return ['2015-08-28T09:02:57.481Z', '2015-08-28T09:02:57.481Z']
         elif type == 'boolean':
             return [False, True]
+
+    @staticmethod
+    def _definition_from_example(example):
+        """Generates a swagger definition json from a given example
+           Works only for simple types in the dict
+
+        Args:
+            example: The example for which we want a definition
+                     Type is DICT
+
+        Returns:
+            A dict that is the swagger definition json
+        """
+        assert isinstance(example, dict)
+
+        def _has_simple_type(value):
+            accepted = [str, int, float, bool]
+            return any(isinstance(value, x) for x in accepted)
+
+        definition = {
+            'type': 'object',
+            'properties': {},
+        }
+        for key, value in example.items():
+            if not _has_simple_type(value):
+                raise Exception("Not implemented yet")
+            ret_value = None
+            if isinstance(value, str):
+                ret_value = {'type': 'string'}
+            elif isinstance(value, int):
+                ret_value = {'type': 'integer', 'format': 'int64'}
+            elif isinstance(value, float):
+                ret_value = {'type': 'number', 'format': 'double'}
+            elif isinstance(value, bool):
+                ret_value = {'type': 'boolean'}
+            else:
+                raise Exception("Not implemented yet")
+            definition['properties'][key] = ret_value
+
+        return definition
 
     def _example_from_definition(self, prop_spec):
         """Get an example from a property specification linked to a definition.
@@ -326,15 +400,63 @@ class SwaggerParser(object):
         list_def_candidate = []
         for definition_name in self.specification['definitions'].keys():
             if self.validate_definition(definition_name, dict):
-                if get_list:
-                    list_def_candidate.append(definition_name)
-                else:
+                if not get_list:
                     return definition_name
+                list_def_candidate.append(definition_name)
         if get_list:
             return list_def_candidate
         return None
 
-    def validate_definition(self, definition_name, dict_to_test):
+    def validate_additional_properties(self, valid_response, response):
+        """Validates additional properties. In additional properties, we only
+           need to compare the values of the dict, not the keys
+
+        Args:
+            valid_response: An example response (for example generated in
+                            _get_example_from_properties(self, spec))
+                            Type is DICT
+            response: The actual dict coming from the response
+                      Type is DICT
+
+        Returns:
+            A boolean - whether the actual response validates against the given example
+        """
+        assert isinstance(valid_response, dict)
+        assert isinstance(response, dict)
+
+        # the type of the value of the first key/value in valid_response is our
+        # expected type - if it is a dict or list, we must go deeper
+        first_value = valid_response[list(valid_response)[0]]
+
+        # dict
+        if isinstance(first_value, dict):
+            # try to find a definition for that first value
+            definition = None
+            definition_name = self.get_dict_definition(first_value)
+            if definition_name is None:
+                definition = self._definition_from_example(first_value)
+                definition_name = 'self generated'
+            for item in response.values():
+                if not self.validate_definition(definition_name,
+                                                item,
+                                                definition=definition):
+                    return False
+            return True
+
+        # TODO: list
+        if isinstance(first_value, list):
+            raise Exception("Not implemented yet")
+
+        # simple types
+        # all values must be of that type in both valid and actual response
+        try:
+            assert all(isinstance(y, type(first_value)) for _, y in response.items())
+            assert all(isinstance(y, type(first_value)) for _, y in valid_response.items())
+            return True
+        except:
+            return False
+
+    def validate_definition(self, definition_name, dict_to_test, definition=None):
         """Validate the given dict according to the given definition.
 
         Args:
@@ -344,18 +466,19 @@ class SwaggerParser(object):
         Returns:
             True if the given dict match the definition, False otherwise.
         """
-        if definition_name not in self.specification['definitions'].keys():
+        if (definition_name not in self.specification['definitions'].keys() and
+                definition is None):
             # reject unknown definition
             return False
 
         # Check all required in dict_to_test
-        spec_def = self.specification['definitions'][definition_name]
+        spec_def = definition or self.specification['definitions'][definition_name]
         all_required_keys_present = all(req in dict_to_test.keys() for req in spec_def.get('required', {}))
         if 'required' in spec_def and not all_required_keys_present:
             return False
 
         # Check no extra arg & type
-        properties_dict = self.specification['definitions'][definition_name]['properties']
+        properties_dict = spec_def['properties']
         for key, value in dict_to_test.items():
             if value is not None:
                 if key not in properties_dict:  # Extra arg
