@@ -221,7 +221,7 @@ def test_validate_definition(swagger_parser, pet_definition_example):
 
 def test_get_paths_data(swagger_parser, post_put_path_data, get_path_data):
     swagger_parser.get_paths_data()
-    assert len(swagger_parser.paths) == 12
+    assert len(swagger_parser.paths) == 13
     assert swagger_parser.paths['/v2/pets'] == post_put_path_data
     assert swagger_parser.paths['/v2/pets/{petId}']['get'] == get_path_data
     post_pet_id = swagger_parser.paths['/v2/pets/{petId}']['post']['parameters']['petId']
