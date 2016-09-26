@@ -34,7 +34,7 @@ class SwaggerParser(object):
 
     _HTTP_VERBS = set(['get', 'put', 'post', 'delete', 'options', 'head', 'patch'])
 
-    def __init__(self, swagger_path=None, swagger_dict=None, use_example=True):
+    def __init__(self, swagger_path=None, swagger_dict=None, swagger_yaml=None, use_example=True):
         """Run parsing from either a file or a dict.
 
         Args:
@@ -57,17 +57,19 @@ class SwaggerParser(object):
                     swagger_template = swagger_yaml.read()
                     swagger_string = jinja2.Template(swagger_template).render(**arguments)
                     self.specification = yaml.load(swagger_string)
-                    self.json_specification = json.dumps(self.specification)
+            elif swagger_yaml is not None:
+                json_ = yaml.load(swagger_yaml)
+                json_string = json.dumps(json_)
+                # the json must contain all strings in the form of u'some_string'.
+                replaced_json_string = re.sub("'(.*)'", "u'\1'", json_string)
+                self.specification = json.loads(replaced_json_string)
             elif swagger_dict is not None:
                 self.specification = swagger_dict
-                self.json_specification = json.dumps(self.specification)
             else:
                 raise ValueError('You must specify a swagger_path or dict')
-
             validate_spec(self.specification, '')
-        except Exception as exc:
-            raise ValueError('{0} is not a valid swagger2.0 file: {1}'.format(swagger_path,
-                                                                              exc))
+        except Exception as e:
+            raise ValueError('{0} is not a valid swagger2.0 file: {1}'.format(swagger_path,  e))
 
         # Run parsing
         self.use_example = use_example

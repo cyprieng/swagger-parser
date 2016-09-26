@@ -1,7 +1,25 @@
 # -*- coding:utf-8 -*-
 
-from copy import deepcopy
 import pytest
+import requests
+
+from copy import deepcopy
+
+from swagger_parser import SwaggerParser
+
+
+# whatever is defined in the petstore, we should be able to parse the json
+def test_validate_petstore_swagger_json():
+    complete_json = requests.get("http://petstore.swagger.io/v2/swagger.json").json()
+    SwaggerParser(swagger_dict=complete_json, use_example=True)
+    SwaggerParser(swagger_dict=complete_json, use_example=False)
+
+
+# whatever is defined in the petstore, we should be able to parse the yaml
+def test_validate_petstore_swagger_yaml():
+    complete_yaml = requests.get("http://petstore.swagger.io/v2/swagger.yaml").text
+    SwaggerParser(swagger_yaml=complete_yaml, use_example=True)
+    SwaggerParser(swagger_yaml=complete_yaml, use_example=False)
 
 
 def test_inline_examples(inline_parser, inline_example):
@@ -203,7 +221,7 @@ def test_validate_definition(swagger_parser, pet_definition_example):
 
 def test_get_paths_data(swagger_parser, post_put_path_data, get_path_data):
     swagger_parser.get_paths_data()
-    assert len(swagger_parser.paths) == 12
+    assert len(swagger_parser.paths) == 13
     assert swagger_parser.paths['/v2/pets'] == post_put_path_data
     assert swagger_parser.paths['/v2/pets/{petId}']['get'] == get_path_data
     post_pet_id = swagger_parser.paths['/v2/pets/{petId}']['post']['parameters']['petId']
