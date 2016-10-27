@@ -373,7 +373,7 @@ class SwaggerParser(object):
             if self.build_one_definition_example(definition_name):
                 example_dict = self.definitions_example[definition_name]
                 if len(example_dict) == 1:
-                    return example_dict[example_dict.keys()[0]]
+                    return example_dict[list(example_dict.keys())[0]]
                 else:
                     return_value = {}
                     for example_name, example_value in example_dict.items():
