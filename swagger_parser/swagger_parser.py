@@ -228,7 +228,7 @@ class SwaggerParser(object):
 
         example = {}
         properties = local_spec.get('properties')
-        if properties != None:
+        if properties is not None:
             required = local_spec.get('required', properties.keys())
 
             for inner_name, inner_spec in properties.items():
