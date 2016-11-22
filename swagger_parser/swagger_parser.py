@@ -869,10 +869,12 @@ class SwaggerParser(object):
                                 # It is an array
                                 # Get value from definition
                                 if '$ref' in spec['schema']['items']:
-                                    definition_name = self.get_definition_name_from_ref(spec['schema']['items']['$ref'])
+                                    definition_name = self.get_definition_name_from_ref(spec['schema']
+                                                                                        ['items']['$ref'])
                                     return [self.definitions_example[definition_name]]
                                 else:
-                                    definition_name = self.get_definition_name_from_ref(spec['schema']['items']['type'])
+                                    definition_name = self.get_definition_name_from_ref(spec['schema']
+                                                                                        ['items']['type'])
                                     return [definition_name]
                             elif 'type' in spec['schema'].keys():
                                 # Type but not array
