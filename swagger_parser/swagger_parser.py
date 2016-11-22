@@ -71,11 +71,6 @@ class SwaggerParser(object):
         except Exception as e:
             raise ValueError('{0} is not a valid swagger2.0 file: {1}'.format(swagger_path,  e))
 
-            validate_spec(self.specification, '')
-        except Exception as exc:
-            raise ValueError('{0} is not a valid swagger2.0 file: {1}'.format(swagger_path,
-                                                                              exc))
-
         # Run parsing
         self.use_example = use_example
         self.base_path = self.specification.get('basePath', '')
