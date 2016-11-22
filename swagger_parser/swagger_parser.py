@@ -194,7 +194,7 @@ class SwaggerParser(object):
             return self._get_example_from_basic_type(prop_spec['type'][0])[0]
 
         # Default - basic type
-        # logging.info("falling back to basic type, no other match found")
+        logging.info("falling back to basic type, no other match found")
         return self._get_example_from_basic_type(prop_spec['type'])[0]
 
     def _get_example_from_properties(self, spec):
