@@ -805,10 +805,11 @@ class SwaggerParser(object):
                     definition_name = self.get_definition_name_from_ref(resp_spec['schema']['items']['$ref'])
                 else:
                     if 'type' in resp_spec['schema']['items']:
-                        definition_name = self.get_definition_name_from_ref(resp_spec['schema']['items']['type'])
+                        definition_name = self.get_definition_name_from_ref(resp_spec['schema']['items'])
                         return [definition_name]
                     else:
-                        resp_spec['schema']['items']
+                        # logging.warn("No item type in: " + resp_spec['schema'])
+                        return ''
                 return [self.definitions_example[definition_name]]
             elif 'type' in resp_spec['schema']:
                 return self.get_example_from_prop_spec(resp_spec['schema'])
