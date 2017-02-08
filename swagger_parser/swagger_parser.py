@@ -480,7 +480,7 @@ class SwaggerParser(object):
             return False
 
         # Check no extra arg & type
-        properties_dict = spec_def['properties']
+        properties_dict = spec_def['properties'] if 'properties' in spec_def else {}
         for key, value in dict_to_test.items():
             if value is not None:
                 if key not in properties_dict:  # Extra arg
