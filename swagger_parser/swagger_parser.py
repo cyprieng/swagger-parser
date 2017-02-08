@@ -281,7 +281,7 @@ class SwaggerParser(object):
         def _has_simple_type(value):
             accepted = (str, int, float, bool)
             return isinstance(value, accepted)
-        
+
         definition = {
             'type': 'object',
             'properties': {},
