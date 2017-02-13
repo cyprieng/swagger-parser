@@ -279,8 +279,8 @@ class SwaggerParser(object):
         assert isinstance(example, dict)
 
         def _has_simple_type(value):
-            accepted = [str, int, float, bool]
-            return any(isinstance(value, x) for x in accepted)
+            accepted = (str, int, float, bool)
+            return isinstance(value, accepted)
 
         definition = {
             'type': 'object',
