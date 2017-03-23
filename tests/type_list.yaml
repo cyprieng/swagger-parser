@@ -1,0 +1,22 @@
+swagger: '2.0'
+info:
+  version: '2016-01-19T11:24:50Z'
+  title: authentication tests
+schemes:
+- http
+paths:
+  /test:
+    get:
+      description: Get something
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/a_definition'
+definitions:
+  a_definition:
+    items: {}
+    type:
+      - array
+      - 'null'
+ 
