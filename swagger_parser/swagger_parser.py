@@ -374,6 +374,8 @@ class SwaggerParser(object):
                 self.get_definition_name_from_ref(prop_spec['schema']['items']['$ref'])
             if self.build_one_definition_example(definition_name):
                 example_dict = self.definitions_example[definition_name]
+                if not isinstance(example_dict, dict):
+                    return [example_dict]
                 if len(example_dict) == 1:
                     return example_dict[list(example_dict.keys())[0]]
                 else:
