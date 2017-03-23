@@ -25,6 +25,7 @@ def test_validate_petstore_swagger_yaml():
 def test_inline_examples(inline_parser, inline_example):
     assert inline_parser.generated_operation == inline_example
 
+
 def test_swagger_file_parser(swagger_file_parser):
     assert swagger_file_parser
 
