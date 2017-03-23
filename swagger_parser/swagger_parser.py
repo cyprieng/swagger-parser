@@ -263,6 +263,8 @@ class SwaggerParser(object):
             return ['2015-08-28T09:02:57.481Z', '2015-08-28T09:02:57.481Z']
         elif type == 'boolean':
             return [False, True]
+        elif type == 'null':
+            return ['null', 'null']
 
     @staticmethod
     def _definition_from_example(example):
