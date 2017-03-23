@@ -334,7 +334,9 @@ class SwaggerParser(object):
         Returns:
             An example.
         """
-        if 'schema' in prop_spec and 'type' not in prop_spec['schema']:
+        if not 'schema' in prop_spec:
+            return [{}]
+        elif 'type' not in prop_spec['schema']:
             definition_name = self.get_definition_name_from_ref(prop_spec['schema']['$ref'])
             if self.build_one_definition_example(definition_name):
                 return self.definitions_example[definition_name]
