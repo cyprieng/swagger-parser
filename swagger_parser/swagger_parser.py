@@ -361,8 +361,11 @@ class SwaggerParser(object):
         Returns:
             An example array.
         """
+        # if items is a list, then each item has its own spec
+        if isinstance(prop_spec['items'], list):
+            return [self.get_example_from_prop_spec(item_prop_spec) for item_prop_spec in prop_spec['items']]
         # Standard types in array
-        if 'type' in prop_spec['items'].keys():
+        elif 'type' in prop_spec['items'].keys():
             if 'format' in prop_spec['items'].keys() and prop_spec['items']['format'] == 'date-time':
                 return self._get_example_from_basic_type('datetime')
             else:
