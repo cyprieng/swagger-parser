@@ -181,7 +181,7 @@ class SwaggerParser(object):
                 return example
             return [example]
         # Array
-        if prop_spec['type'] == 'array':
+        if prop_spec['type'] == 'array' or (isinstance(prop_spec['type'], list) and prop_spec['type'][0] == 'array'):
             return self._example_from_array_spec(prop_spec)
         # File
         if prop_spec['type'] == 'file':
