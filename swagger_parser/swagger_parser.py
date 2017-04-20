@@ -181,7 +181,7 @@ class SwaggerParser(object):
                 return example
             return [example]
         # Array
-        if prop_spec['type'] == 'array':
+        if prop_spec['type'] == 'array' or (isinstance(prop_spec['type'], list) and prop_spec['type'][0] == 'array'):
             return self._example_from_array_spec(prop_spec)
         # File
         if prop_spec['type'] == 'file':
@@ -227,7 +227,7 @@ class SwaggerParser(object):
             local_spec['required'] = required
 
         example = {}
-        properties = local_spec.get('properties')
+        properties = local_spec.get('properties', {})
         required = local_spec.get('required', properties.keys())
 
         for inner_name, inner_spec in properties.items():
@@ -263,6 +263,8 @@ class SwaggerParser(object):
             return ['2015-08-28T09:02:57.481Z', '2015-08-28T09:02:57.481Z']
         elif type == 'boolean':
             return [False, True]
+        elif type == 'null':
+            return ['null', 'null']
 
     @staticmethod
     def _definition_from_example(example):
@@ -334,7 +336,9 @@ class SwaggerParser(object):
         Returns:
             An example.
         """
-        if 'schema' in prop_spec and 'type' not in prop_spec['schema']:
+        if 'schema' not in prop_spec:
+            return [{}]
+        elif 'type' not in prop_spec['schema']:
             definition_name = self.get_definition_name_from_ref(prop_spec['schema']['$ref'])
             if self.build_one_definition_example(definition_name):
                 return self.definitions_example[definition_name]
@@ -357,8 +361,11 @@ class SwaggerParser(object):
         Returns:
             An example array.
         """
+        # if items is a list, then each item has its own spec
+        if isinstance(prop_spec['items'], list):
+            return [self.get_example_from_prop_spec(item_prop_spec) for item_prop_spec in prop_spec['items']]
         # Standard types in array
-        if 'type' in prop_spec['items'].keys():
+        elif 'type' in prop_spec['items'].keys():
             if 'format' in prop_spec['items'].keys() and prop_spec['items']['format'] == 'date-time':
                 return self._get_example_from_basic_type('datetime')
             else:
@@ -372,6 +379,8 @@ class SwaggerParser(object):
                 self.get_definition_name_from_ref(prop_spec['schema']['items']['$ref'])
             if self.build_one_definition_example(definition_name):
                 example_dict = self.definitions_example[definition_name]
+                if not isinstance(example_dict, dict):
+                    return [example_dict]
                 if len(example_dict) == 1:
                     return example_dict[list(example_dict.keys())[0]]
                 else:
