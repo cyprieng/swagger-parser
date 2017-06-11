@@ -2,6 +2,18 @@
 History
 =======
 
+1.0.0 (2017-6-11)
+-----------------
+
+* Drop support for python 2.6, add support for python 3.5, python 3.6 and pypy
+* Fix issue `#35 <https://github.com/Trax-air/swagger-parser/issues/35>`_
+* `Add file parser tests and fixes for #40, #41, #42, #43, #44, #45 <https://github.com/Trax-air/swagger-parser/pull/39>`_, thanks to @mtherieau
+* `Use isinstance for simple type checking <https://github.com/Trax-air/swagger-parser/pull/36>`_, thanks to @pankaj28843
+* `Fixes for #31, #32, #33 <https://github.com/Trax-air/swagger-parser/pull/34>`_, thanks to @crudo10 and @beanqueen for the review
+* `Bug fix when dictionary only contains 1 element <https://github.com/Trax-air/swagger-parser/pull/30>`_, thanks to @TenOs
+* `Add tests for "official" petstore json and yaml <https://github.com/Trax-air/swagger-parser/pull/29>`_, thanks to @beanqueen
+
+
 0.1.11 (2016-9-25)
 ------------------
 
