@@ -227,19 +227,20 @@ class SwaggerParser(object):
             local_spec['required'] = required
 
         example = {}
-        properties = local_spec.get('properties', {})
-        required = local_spec.get('required', properties.keys())
+        properties = local_spec.get('properties')
+        if properties is not None:
+            required = local_spec.get('required', properties.keys())
 
-        for inner_name, inner_spec in properties.items():
-            if inner_name not in required:
-                continue
-            partial = self.get_example_from_prop_spec(inner_spec)
-            # While get_example_from_prop_spec is supposed to return a list,
-            # we don't actually want that when recursing to build from
-            # properties
-            if isinstance(partial, list):
-                partial = partial[0]
-            example[inner_name] = partial
+            for inner_name, inner_spec in properties.items():
+                if inner_name not in required:
+                    continue
+                partial = self.get_example_from_prop_spec(inner_spec)
+                # While get_example_from_prop_spec is supposed to return a list,
+                # we don't actually want that when recursing to build from
+                # properties
+                if isinstance(partial, list):
+                    partial = partial[0]
+                example[inner_name] = partial
 
         return example, additional_property
 
@@ -347,7 +348,11 @@ class SwaggerParser(object):
             if 'items' in prop_spec.keys():
                 definition_name = self.get_definition_name_from_ref(prop_spec['items']['$ref'])
             else:
-                definition_name = self.get_definition_name_from_ref(prop_spec['schema']['items']['$ref'])
+                if '$ref' in prop_spec['schema']['items']:
+                    definition_name = self.get_definition_name_from_ref(prop_spec['schema']['items']['$ref'])
+                else:
+                    definition_name = self.get_definition_name_from_ref(prop_spec['schema']['items']['type'])
+                    return [definition_name]
             return [self.definitions_example[definition_name]]
         else:
             return self.get_example_from_prop_spec(prop_spec['schema'])
@@ -382,7 +387,12 @@ class SwaggerParser(object):
                 if not isinstance(example_dict, dict):
                     return [example_dict]
                 if len(example_dict) == 1:
-                    return example_dict[list(example_dict.keys())[0]]
+                    try:  # Python 2.7
+                        res = example_dict[example_dict.keys()[0]]
+                    except TypeError:  # Python 3
+                        res = example_dict[list(example_dict)[0]]
+                    return res
+
                 else:
                     return_value = {}
                     for example_name, example_value in example_dict.items():
@@ -800,7 +810,15 @@ class SwaggerParser(object):
                 definition_name = self.get_definition_name_from_ref(resp_spec['schema']['$ref'])
                 return self.definitions_example[definition_name]
             elif 'items' in resp_spec['schema'] and resp_spec['schema']['type'] == 'array':  # Array
-                definition_name = self.get_definition_name_from_ref(resp_spec['schema']['items']['$ref'])
+                if '$ref' in resp_spec['schema']['items']:
+                    definition_name = self.get_definition_name_from_ref(resp_spec['schema']['items']['$ref'])
+                else:
+                    if 'type' in resp_spec['schema']['items']:
+                        definition_name = self.get_definition_name_from_ref(resp_spec['schema']['items'])
+                        return [definition_name]
+                    else:
+                        logging.warn("No item type in: " + resp_spec['schema'])
+                        return ''
                 return [self.definitions_example[definition_name]]
             elif 'type' in resp_spec['schema']:
                 return self.get_example_from_prop_spec(resp_spec['schema'])
@@ -860,8 +878,14 @@ class SwaggerParser(object):
                             if 'type' in spec['schema'].keys() and spec['schema']['type'] == 'array':
                                 # It is an array
                                 # Get value from definition
-                                definition_name = self.get_definition_name_from_ref(spec['schema']['items']['$ref'])
-                                return [self.definitions_example[definition_name]]
+                                if '$ref' in spec['schema']['items']:
+                                    definition_name = self.get_definition_name_from_ref(spec['schema']
+                                                                                        ['items']['$ref'])
+                                    return [self.definitions_example[definition_name]]
+                                else:
+                                    definition_name = self.get_definition_name_from_ref(spec['schema']
+                                                                                        ['items']['type'])
+                                    return [definition_name]
                             elif 'type' in spec['schema'].keys():
                                 # Type but not array
                                 return self.get_example_from_prop_spec(spec['schema'])
