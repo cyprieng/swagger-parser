@@ -8,6 +8,7 @@ import json
 import logging
 import re
 import six
+import sys
 import yaml
 
 from copy import deepcopy
@@ -69,7 +70,10 @@ class SwaggerParser(object):
                 raise ValueError('You must specify a swagger_path or dict')
             validate_spec(self.specification, '')
         except Exception as e:
-            raise ValueError('{0} is not a valid swagger2.0 file: {1}'.format(swagger_path,  e))
+            six.reraise(
+                ValueError,
+                ValueError('{0} is not a valid swagger2.0 file: {1}'.format(swagger_path,  e)),
+                sys.exc_info()[2])
 
         # Run parsing
         self.use_example = use_example
@@ -474,7 +478,7 @@ class SwaggerParser(object):
             assert all(isinstance(y, type(first_value)) for _, y in response.items())
             assert all(isinstance(y, type(first_value)) for _, y in valid_response.items())
             return True
-        except:
+        except Exception:
             return False
 
     def validate_definition(self, definition_name, dict_to_test, definition=None):
