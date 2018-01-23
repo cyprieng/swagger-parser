@@ -907,8 +907,8 @@ def _validate_post_body(actual_request_body, body_specification):
     """
 
     # If no body specified, return True (POST with empty body is allowed):
-    if body_specification['parameters'] is None:
-        return True
+    if "body" not in body_specification["parameters"]:
+        return True, ""
 
     # Are there required parameters? - there is only ONE body, so we check that one
     parameters_required = body_specification['parameters']['body']['required']
