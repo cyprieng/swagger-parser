@@ -29,4 +29,4 @@ deploy:
     tags: true
     branch: master
     repo: Trax-air/swagger-parser
-    condition: $TOXENV == py27
+    condition: $TOX_ENV == py27
