@@ -57,9 +57,9 @@ class SwaggerParser(object):
                 with codecs.open(swagger_path, 'r', 'utf-8') as swagger_yaml:
                     swagger_template = swagger_yaml.read()
                     swagger_string = jinja2.Template(swagger_template).render(**arguments)
-                    self.specification = yaml.load(swagger_string)
+                    self.specification = yaml.safe_load(swagger_string)
             elif swagger_yaml is not None:
-                json_ = yaml.load(swagger_yaml)
+                json_ = yaml.safe_load(swagger_yaml)
                 json_string = json.dumps(json_)
                 # the json must contain all strings in the form of u'some_string'.
                 replaced_json_string = re.sub("'(.*)'", "u'\1'", json_string)
