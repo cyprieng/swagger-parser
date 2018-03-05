@@ -61,9 +61,7 @@ class SwaggerParser(object):
             elif swagger_yaml is not None:
                 json_ = yaml.safe_load(swagger_yaml)
                 json_string = json.dumps(json_)
-                # the json must contain all strings in the form of u'some_string'.
-                replaced_json_string = re.sub("'(.*)'", "u'\1'", json_string)
-                self.specification = json.loads(replaced_json_string)
+                self.specification = json.loads(json_string)
             elif swagger_dict is not None:
                 self.specification = swagger_dict
             else:
