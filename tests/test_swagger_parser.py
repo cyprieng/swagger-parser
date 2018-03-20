@@ -390,6 +390,7 @@ def test_allof_handling(swagger_allof_parser):
     another_example = swagger_allof_parser.definitions_example['anotherObject']
     assert 'a_property' in another_example
     assert 'another_property' in another_example
+    assert 'some_integer' in another_example
 
 
 @pytest.mark.skip

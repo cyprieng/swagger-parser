@@ -26,6 +26,9 @@ definitions:
         another_property:
             description: another property
             type: string
+        some_integer:
+            description: an integer
+            type: integer
   someObject:
     description: some object
     allOf:
