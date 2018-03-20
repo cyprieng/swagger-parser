@@ -155,11 +155,13 @@ class SwaggerParser(object):
         else:
             return False
 
-    def get_example_from_prop_spec(self, prop_spec):
+    def get_example_from_prop_spec(self, prop_spec, from_allof = False):
         """Return an example value from a property specification.
 
         Args:
             prop_spec: the specification of the property.
+            from_allof: whether these properties are part of an
+                        allOf section
 
         Returns:
             An example value
@@ -175,13 +177,16 @@ class SwaggerParser(object):
         # From definition
         if '$ref' in prop_spec.keys():
             return self._example_from_definition(prop_spec)
+        # Process AllOf section
+        if 'allOf' in prop_spec.keys():
+            return self._example_from_allof(prop_spec)
         # Complex type
         if 'type' not in prop_spec:
             return self._example_from_complex_def(prop_spec)
         # Object - read from properties, without references
         if prop_spec['type'] == 'object':
             example, additional_properties = self._get_example_from_properties(prop_spec)
-            if additional_properties:
+            if additional_properties or from_allof:
                 return example
             return [example]
         # Array
@@ -310,6 +315,21 @@ class SwaggerParser(object):
             definition['properties'][key] = ret_value
 
         return definition
+
+    def _example_from_allof(self, prop_spec):
+        """Get the examples from an allOf section.
+
+        Args:
+            prop_spec: property specification you want an example of.
+
+        Returns:
+            An example dict
+        """
+        example_dict = {}
+        for definition in prop_spec['allOf']:
+            update = self.get_example_from_prop_spec(definition, True)
+            example_dict.update(update)
+        return example_dict
 
     def _example_from_definition(self, prop_spec):
         """Get an example from a property specification linked to a definition.
