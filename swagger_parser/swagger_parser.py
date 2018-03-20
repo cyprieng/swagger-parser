@@ -155,7 +155,7 @@ class SwaggerParser(object):
         else:
             return False
 
-    def get_example_from_prop_spec(self, prop_spec, from_allof = False):
+    def get_example_from_prop_spec(self, prop_spec, from_allof=False):
         """Return an example value from a property specification.
 
         Args:
