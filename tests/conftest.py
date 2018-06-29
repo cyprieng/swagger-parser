@@ -11,6 +11,16 @@ def swagger_parser():
 
 
 @pytest.fixture
+def swagger_allof_parser():
+    return SwaggerParser('tests/allof.yaml')
+
+
+@pytest.fixture
+def swagger_test2_parser():
+    return SwaggerParser('tests/test.yaml')
+
+
+@pytest.fixture
 def inline_parser():
     return SwaggerParser('tests/inline.yaml')
 

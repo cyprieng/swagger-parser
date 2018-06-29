@@ -382,6 +382,17 @@ def test_referenced_additional_property_handling(swagger_parser):
     assert not swagger_parser.validate_additional_properties(additional_properties, bad_response)
 
 
+def test_allof_handling(swagger_allof_parser):
+    example = swagger_allof_parser.definitions_example['someObject']
+    assert 'a_property' in example
+    assert 'some_property' in example
+
+    another_example = swagger_allof_parser.definitions_example['anotherObject']
+    assert 'a_property' in another_example
+    assert 'another_property' in another_example
+    assert 'some_integer' in another_example
+
+
 @pytest.mark.skip
 def test_list_additional_property_handling(swagger_parser):
     # TODO list handling in additionalProperties is not implemented yet

@@ -20,15 +20,28 @@ definitions:
         a_property:
            description: a property
            type: string
+  anotherBaseObject:
+    description: another base object
+    properties:
+        another_property:
+            description: another property
+            type: string
+        some_integer:
+            description: an integer
+            type: integer
   someObject:
     description: some object
     allOf:
       - $ref: '#/definitions/baseObject'
-    properties:
-      some_property:
-        description: some property
-        type: string
-    required:
-      - a_property
-    type: object
-    
+      - type: object
+        properties:
+          some_property:
+            description: some property
+            type: string
+        required:
+          - some_property
+  anotherObject:
+    description: another object
+    allOf:
+      - $ref: '#/definitions/baseObject'
+      - $ref: '#/definitions/anotherBaseObject'
