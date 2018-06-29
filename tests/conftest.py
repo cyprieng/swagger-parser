@@ -26,15 +26,13 @@ def inline_parser():
 
 
 @pytest.fixture(scope="module",
-                params=[  # 'tests/no_properties.yaml',
-                          # 'tests/object_no_schema.yaml',
-                          # 'tests/allof.yaml',
-                          # 'tests/array_ref_simple.yaml',
-                          # 'tests/null_type.yaml',
-                          # 'tests/array_items_list.yaml',
-                          # 'tests/type_list.yaml',
-                        'tests/test.yaml',
-                          # 'tests/test2.yaml',
+                params=['tests/no_properties.yaml',
+                        'tests/object_no_schema.yaml',
+                        'tests/allof.yaml',
+                        'tests/array_ref_simple.yaml',
+                        'tests/null_type.yaml',
+                        'tests/array_items_list.yaml',
+                        'tests/type_list.yaml',
                         ])
 def swagger_file_parser(request):
     return SwaggerParser(request.param)
