@@ -929,7 +929,7 @@ def _validate_post_body(actual_request_body, body_specification):
         return True, ""
 
     # Are there required parameters? - there is only ONE body, so we check that one
-    parameters_required = body_specification['parameters']['body']['required']
+    parameters_required = body_specification['parameters']['body'].get('required')
 
     # What if it says 'required' but there is no schema ? - we reject it
     schema_present = body_specification['parameters']['body'].get('schema')
