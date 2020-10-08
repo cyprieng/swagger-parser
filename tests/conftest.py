@@ -31,8 +31,8 @@ def inline_parser():
                         'tests/allof.yaml',
                         'tests/array_ref_simple.yaml',
                         'tests/null_type.yaml',
-                        'tests/array_items_list.yaml',
-                        'tests/type_list.yaml',
+                        # 'tests/array_items_list.yaml',
+                        # 'tests/type_list.yaml',
                         ])
 def swagger_file_parser(request):
     return SwaggerParser(request.param)
