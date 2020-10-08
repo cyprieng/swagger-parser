@@ -2,6 +2,7 @@
 
 import pytest
 import requests
+import functools
 
 from copy import deepcopy
 
@@ -428,3 +429,40 @@ def test_list_additional_property_handling(swagger_parser):
     }
     assert swagger_parser.validate_additional_properties(additional_properties_4, valid_response_4)
     assert not swagger_parser.validate_additional_properties(additional_properties_4, bad_response_4)
+
+
+def test_msg_after_validate(swagger_msg_validate_parser):
+    def check(data, definition_name='main'):
+        return swagger_msg_validate_parser.validate_definition(
+            definition_name=definition_name,
+            dict_to_test=data,
+            definition=None,
+            return_error_message=True,
+        )
+
+    # test success story
+    assert check({}) == (True, None)
+    assert check({
+        'd': {'e': 3, 'f': 'qw'},
+    }) == (True, None)
+    assert check({'a': 'a'}, 'secondary') == (True, None)
+
+    # test message about fail
+    assert check({
+        'b': 'test1',
+    }) == (False, 'Expected integer type, but got `test1`')
+    assert check({
+        'c': [1, 2, 'test2'],
+    }) == (False, 'Expected integer type, but got `test2`')
+    assert check({
+        'd': {'e': '3q', 'f': 'qw'},
+    }) == (False, 'Expected integer type, but got `3q`')
+    assert check({
+        'd': {'no-e': 'test4'},
+    }) == (False, 'key `no-e` is present, but not documented')
+    assert check({}, 'secondary') == (False, "Required keys(['a']) are not present")
+
+    # maybe fix in the future
+    assert check({
+        'a': 'no-date',
+    }) == (True, None)  # can't check `format`

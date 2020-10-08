@@ -123,17 +123,27 @@ class SwaggerParser(object):
 
         return True
 
-    @staticmethod
-    def check_type(value, type_def):
+    def check_type(self, value, type_def, return_error_message=False):
         """Check if the value is in the type given in type_def.
 
         Args:
             value: the var to test.
             type_def: string representing the type in swagger.
+            return_error_message: set to True to get the reason for the validation error.
 
         Returns:
-            True if the type is correct, False otherwise.
+            If not return_error_message
+                True if the type is correct, False otherwise.
+            else return tuple of (bool, str)
         """
+        if return_error_message:
+            is_valid = self.check_type(value, type_def)
+            if is_valid:
+                return True, None
+            return False, 'Expected %s type, but got `%s`' % (
+                type_def, value
+            )
+
         if type_def == 'integer':
             try:
                 # We accept string with integer ex: '123'
@@ -499,74 +509,132 @@ class SwaggerParser(object):
         except Exception:
             return False
 
-    def validate_definition(self, definition_name, dict_to_test, definition=None):
+    def validate_definition(self, definition_name, dict_to_test, definition=None,
+                            return_error_message=False):
         """Validate the given dict according to the given definition.
 
         Args:
             definition_name: name of the the definition.
             dict_to_test: dict to test.
+            definition: author skipped it in docstring =(
+            return_error_message: set to True to get the reason for the validation error.
 
         Returns:
-            True if the given dict match the definition, False otherwise.
+            If return_error_message is False
+                True if the given dict match the definition, False otherwise.
+            else return tuple of (bool, str)
         """
         if (definition_name not in self.specification['definitions'].keys() and
                 definition is None):
             # reject unknown definition
-            return False
+            if not return_error_message:
+                return False
+            else:
+                return False, ('%s not found in %s. Probably, the definition_name'
+                               ' specified with error' % (
+                                   definition_name,
+                                   self.specification['definitions'].keys(),
+                               ))
 
         # Check all required in dict_to_test
         spec_def = definition or self.specification['definitions'][definition_name]
-        all_required_keys_present = all(req in dict_to_test.keys() for req in spec_def.get('required', {}))
-        if 'required' in spec_def and not all_required_keys_present:
-            return False
+        if 'required' in spec_def:
+            if not return_error_message:
+                if not all(
+                    req in dict_to_test.keys() for req in spec_def.get('required', {})
+                ):
+                    return False
+            else:
+                set_of_keys = set(dict_to_test.keys())
+                required_keys_not_present = []
+                for req in spec_def.get('required', {}):
+                    if req not in set_of_keys:
+                        required_keys_not_present.append(req)
+                if len(required_keys_not_present):
+                    return False, 'Required keys(%s) are not present' % (
+                        required_keys_not_present
+                    )
 
         # Check no extra arg & type
         properties_dict = spec_def.get('properties', {})
         for key, value in dict_to_test.items():
             if value is not None:
                 if key not in properties_dict:  # Extra arg
-                    return False
-                else:  # Check type
-                    if not self._validate_type(properties_dict[key], value):
+                    if not return_error_message:
                         return False
+                    else:
+                        return False, 'key `%s` is present, but not ' \
+                                      'documented' % key
+                else:  # Check type
+                    if not return_error_message:
+                        if not self._validate_type(properties_dict[key], value):
+                            return False
+                    else:
+                        valid, err_msg = self._validate_type(
+                            properties_dict[key], value, return_error_message
+                        )
+                        if not valid:
+                            return False, err_msg
+        return True if not return_error_message else (True, None)
 
-        return True
-
-    def _validate_type(self, properties_spec, value):
+    def _validate_type(self, properties_spec, value, return_error_message=False):
         """Validate the given value with the given property spec.
 
         Args:
-            properties_dict: specification of the property to check (From definition not route).
+            properties_spec: specification of the property to check (From definition not route).
             value: value to check.
+            return_error_message: set to True to get the reason for the validation error.
 
         Returns:
-            True if the value is valid for the given spec.
+            If return_error_message is False:
+                True if the value is valid for the given spec.
+            else return tuple of (bool, str)
         """
         if 'type' not in properties_spec.keys():
             # Validate sub definition
             def_name = self.get_definition_name_from_ref(properties_spec['$ref'])
-            return self.validate_definition(def_name, value)
+            return self.validate_definition(def_name, value, None, return_error_message)
+
+        # Validate object
+        elif properties_spec['type'] == 'object':
+            return self.validate_definition(None, value, properties_spec,
+                                            return_error_message)
 
         # Validate array
         elif properties_spec['type'] == 'array':
             if not isinstance(value, list):
-                return False
+                if not return_error_message:
+                    return False
+                return False, 'Expected list, but got `%s`' % value
 
             # Check type
-            if ('type' in properties_spec['items'].keys() and
-                    any(not self.check_type(item, properties_spec['items']['type']) for item in value)):
-                return False
+            if 'type' in properties_spec['items'].keys():
+                for item in value:
+                    result = self.check_type(item, properties_spec['items']['type'],
+                                             return_error_message)
+                    if (not return_error_message) and (result is False):
+                        return False
+                    elif return_error_message and (result[0] is False):
+                        return result
             # Check ref
-            elif ('$ref' in properties_spec['items'].keys()):
-                def_name = self.get_definition_name_from_ref(properties_spec['items']['$ref'])
-                if any(not self.validate_definition(def_name, item) for item in value):
-                    return False
+            elif '$ref' in properties_spec['items'].keys():
+                def_name = self.get_definition_name_from_ref(
+                    properties_spec['items']['$ref']
+                )
+                for item in value:
+                    result = self.validate_definition(
+                        def_name, item, None, return_error_message,
+                    )
+                    if (not return_error_message) and (result is False):
+                        return False
+                    elif return_error_message and (result[0] is False):
+                        return False, result[1]
 
         else:  # Classic types
-            if not self.check_type(value, properties_spec['type']):
-                return False
+            return self.check_type(value, properties_spec['type'],
+                                   return_error_message)
 
-        return True
+        return True if not return_error_message else (True, None)
 
     def get_paths_data(self):
         """Get data for each paths in the swagger specification.
