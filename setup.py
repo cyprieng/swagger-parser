@@ -24,7 +24,7 @@ test_requirements = parse_requirements('requirements_dev.txt')
 
 setup(
     name='swagger_parser',
-    version='1.0.1',
+    version='1.0.2',
     description="Swagger parser giving useful informations about your swagger files",
     long_description=readme + '\n\n' + history,
     author="Cyprien Guillemot",
