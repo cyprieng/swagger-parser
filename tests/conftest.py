@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import pytest
 
 from swagger_parser import SwaggerParser
@@ -7,32 +8,32 @@ from swagger_parser import SwaggerParser
 
 @pytest.fixture
 def swagger_parser():
-    return SwaggerParser('tests/swagger.yaml')
+    return SwaggerParser(os.path.join(os.path.dirname(__file__), 'files', 'swagger.yaml'))
 
 
 @pytest.fixture
 def swagger_allof_parser():
-    return SwaggerParser('tests/allof.yaml')
+    return SwaggerParser(os.path.join(os.path.dirname(__file__), 'files', 'allof.yaml'))
 
 
 @pytest.fixture
 def swagger_test2_parser():
-    return SwaggerParser('tests/test.yaml')
+    return SwaggerParser(os.path.join(os.path.dirname(__file__), 'files', 'test.yaml'))
 
 
 @pytest.fixture
 def inline_parser():
-    return SwaggerParser('tests/inline.yaml')
+    return SwaggerParser(os.path.join(os.path.dirname(__file__), 'files', 'inline.yaml'))
 
 
 @pytest.fixture(scope="module",
-                params=['tests/no_properties.yaml',
-                        'tests/object_no_schema.yaml',
-                        'tests/allof.yaml',
-                        'tests/array_ref_simple.yaml',
-                        'tests/null_type.yaml',
-                        'tests/array_items_list.yaml',
-                        'tests/type_list.yaml',
+                params=[os.path.join(os.path.dirname(__file__), 'files', 'no_properties.yaml'),
+                        os.path.join(os.path.dirname(__file__), 'files', 'object_no_schema.yaml'),
+                        os.path.join(os.path.dirname(__file__), 'files', 'allof.yaml'),
+                        os.path.join(os.path.dirname(__file__), 'files', 'array_ref_simple.yaml'),
+                        os.path.join(os.path.dirname(__file__), 'files', 'null_type.yaml'),
+                        os.path.join(os.path.dirname(__file__), 'files', 'array_items_list.yaml'),
+                        os.path.join(os.path.dirname(__file__), 'files', 'type_list.yaml'),
                         ])
 def swagger_file_parser(request):
     return SwaggerParser(request.param)
@@ -142,4 +143,4 @@ def post_put_path_data():
 
 @pytest.fixture
 def swagger_array_parser():
-    return SwaggerParser('tests/swagger_arrays.yaml')
+    return SwaggerParser(os.path.join(os.path.dirname(__file__), 'files', 'swagger_arrays.yaml'))

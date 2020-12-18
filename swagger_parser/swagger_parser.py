@@ -404,7 +404,7 @@ class SwaggerParser(object):
 
         # Array with definition
         elif ('$ref' in prop_spec['items'].keys() or
-              ('schema' in prop_spec and'$ref' in prop_spec['schema']['items'].keys())):
+              ('schema' in prop_spec and '$ref' in prop_spec['schema']['items'].keys())):
             # Get value from definition
             definition_name = self.get_definition_name_from_ref(prop_spec['items']['$ref']) or \
                 self.get_definition_name_from_ref(prop_spec['schema']['items']['$ref'])
@@ -640,7 +640,7 @@ class SwaggerParser(object):
         Returns:
             The definition name corresponding to the ref.
         """
-        p = re.compile('#\/definitions\/(.*)')
+        p = re.compile('#/definitions/(.*)')
         definition_name = re.sub(p, r'\1', ref)
         return definition_name
 
@@ -895,30 +895,30 @@ class SwaggerParser(object):
         path_name, path_spec = self.get_path_spec(path)
 
         if path_spec is not None and action in path_spec.keys():
-                for name, spec in path_spec[action]['parameters'].items():
-                    if spec['in'] == 'body':  # Get body parameter
-                        if 'type' in spec.keys():
-                            # Get value from type
-                            return self.get_example_from_prop_spec(spec)
-                        elif 'schema' in spec.keys():
-                            if 'type' in spec['schema'].keys() and spec['schema']['type'] == 'array':
-                                # It is an array
-                                # Get value from definition
-                                if '$ref' in spec['schema']['items']:
-                                    definition_name = self.get_definition_name_from_ref(spec['schema']
-                                                                                        ['items']['$ref'])
-                                    return [self.definitions_example[definition_name]]
-                                else:
-                                    definition_name = self.get_definition_name_from_ref(spec['schema']
-                                                                                        ['items']['type'])
-                                    return [definition_name]
-                            elif 'type' in spec['schema'].keys():
-                                # Type but not array
-                                return self.get_example_from_prop_spec(spec['schema'])
+            for name, spec in path_spec[action]['parameters'].items():
+                if spec['in'] == 'body':  # Get body parameter
+                    if 'type' in spec.keys():
+                        # Get value from type
+                        return self.get_example_from_prop_spec(spec)
+                    elif 'schema' in spec.keys():
+                        if 'type' in spec['schema'].keys() and spec['schema']['type'] == 'array':
+                            # It is an array
+                            # Get value from definition
+                            if '$ref' in spec['schema']['items']:
+                                definition_name = self.get_definition_name_from_ref(spec['schema']
+                                                                                    ['items']['$ref'])
+                                return [self.definitions_example[definition_name]]
                             else:
-                                # Get value from definition
-                                definition_name = self.get_definition_name_from_ref(spec['schema']['$ref'])
-                                return self.definitions_example[definition_name]
+                                definition_name = self.get_definition_name_from_ref(spec['schema']
+                                                                                    ['items']['type'])
+                                return [definition_name]
+                        elif 'type' in spec['schema'].keys():
+                            # Type but not array
+                            return self.get_example_from_prop_spec(spec['schema'])
+                        else:
+                            # Get value from definition
+                            definition_name = self.get_definition_name_from_ref(spec['schema']['$ref'])
+                            return self.definitions_example[definition_name]
 
 
 def _validate_post_body(actual_request_body, body_specification):
@@ -945,7 +945,7 @@ def _validate_post_body(actual_request_body, body_specification):
     text_is_accepted = any('text' in item for item in body_specification.get('consumes', []))
     json_is_accepted = any('json' in item for item in body_specification.get('consumes', []))
 
-    if actual_request_body is '' and not text_is_accepted:
+    if actual_request_body == '' and not text_is_accepted:
         msg = "post body is an empty string, but text is not an accepted mime type"
         return False, msg
 
