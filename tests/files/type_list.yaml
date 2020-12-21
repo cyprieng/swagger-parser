@@ -16,7 +16,5 @@ paths:
 definitions:
   a_definition:
     items: {}
-    type:
-      - array
-      - 'null'
- 
+    type: 'null'
+

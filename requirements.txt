@@ -1,4 +1,5 @@
-PyYAML>=3.11
-jinja2>=2.8
 swagger-spec-validator>=2.0.2
+jsonschema>=2.5.1
 requests
+PyYAML==5.2b1
+jinja2>=2.8

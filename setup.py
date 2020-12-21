@@ -24,7 +24,7 @@ test_requirements = parse_requirements('requirements_dev.txt')
 
 setup(
     name='swagger_parser',
-    version='1.0.1',
+    version='1.0.2',
     description="Swagger parser giving useful informations about your swagger files",
     long_description=readme + '\n\n' + history,
     author="Cyprien Guillemot",
@@ -46,12 +46,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3'
     ],
     test_suite='tests',
     tests_require=test_requirements

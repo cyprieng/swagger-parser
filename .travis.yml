@@ -1,17 +1,13 @@
 language: python
 matrix:
   include:
-    - python: 2.7
-      env: TOX_ENV=py27
-    - python: 3.4
-      env: TOX_ENV=py34
-    - python: 3.5
-      env: TOX_ENV=py35
     - python: 3.6
       env: TOX_ENV=py36
-    - python: pypy
-      env: TOX_ENV=pypy
-    - python: 3.5
+    - python: 3.7
+      env: TOX_ENV=py37
+    - python: 3.8
+      env: TOX_ENV=py38
+    - python: 3.6
       env: TOX_ENV=flake8
 install:
 - pip install -U tox
@@ -26,5 +22,5 @@ deploy:
   on:
     tags: true
     branch: master
-    repo: Trax-air/swagger-parser
-    condition: $TOX_ENV == py27
+    repo: cyprieng/swagger-parser
+    condition: $TOX_ENV == py36
