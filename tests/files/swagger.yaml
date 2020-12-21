@@ -503,9 +503,7 @@ definitions:
         type: integer
         format: int64
       username:
-        type:
-          - "string"
-          - "null"
+        type: string
       firstName:
         type: string
       lastName:
